@@ -9,6 +9,9 @@ interface EnvVars{
     NOTIFICATIONS_MICROSERVICE_HOST: string;
     NOTIFICATIONS_MICROSERVICE_PORT: number;
 
+    CONTENT_MICROSERVICE_HOST: string;
+    CONTENT_MICROSERVICE_PORT: number;
+
     SESSION_SECRET: string;
 }
 
@@ -19,6 +22,9 @@ const envSchema = joi.object({
 
     NOTIFICATIONS_MICROSERVICE_HOST: joi.string().required(),
     NOTIFICATIONS_MICROSERVICE_PORT: joi.number().required(),
+
+    CONTENT_MICROSERVICE_HOST: joi.string().required(),
+    CONTENT_MICROSERVICE_PORT: joi.number().required(),
 
     SESSION_SECRET: joi.string().required(),
 }).unknown(true)
@@ -38,6 +44,9 @@ export const envs = {
 
     notificationsMsHost: envVars.NOTIFICATIONS_MICROSERVICE_HOST,
     notificationsMsPort: envVars.NOTIFICATIONS_MICROSERVICE_PORT,
+
+    contentMsHost: envVars.CONTENT_MICROSERVICE_HOST,
+    contentMsPort: envVars.CONTENT_MICROSERVICE_PORT,
 
     sessionSecret: envVars.SESSION_SECRET,
 }
