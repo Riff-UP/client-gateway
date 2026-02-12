@@ -1,0 +1,6 @@
+export * from './event_attendance/event.attendance.controller'
+export * from './event_reviews/event.reviews.controller'
+export * from './events/events.controller'
+export * from './post_reactions/post-reactions.controller'
+export * from './posts/posts.controller'
+export * from './saved_posts/saved-post.controller'

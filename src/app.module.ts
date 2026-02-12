@@ -3,8 +3,11 @@ import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users/users.module.js';
 import { AuthModule } from './auth/auth.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { PostsModule } from './content/modules/posts/posts.module.js';
-import { EventsModule } from './content/modules/events/events.module.js';
+import { PostsModule, SavedPostsModule } from './content/modules';
+import { EventsModule } from './content/modules';
+import { EventAttendanceModule } from './content/modules';
+import { EventReviewsModule } from './content/modules';
+import { PostReactionsModule } from './content/modules';
 
 @Module({
   imports: [
@@ -15,6 +18,10 @@ import { EventsModule } from './content/modules/events/events.module.js';
     AuthModule,
     NotificationsModule,
     EventsModule,
+    EventAttendanceModule,
+    EventReviewsModule,
+    PostReactionsModule,
+    SavedPostsModule,
     PostsModule,
   ],
 })

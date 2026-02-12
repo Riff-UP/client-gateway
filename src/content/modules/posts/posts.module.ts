@@ -1,5 +1,5 @@
 import { Module } from '@nestjs/common';
-import { PostsController } from '../../controllers/posts/posts.controller';
+import { PostsController } from '../../controllers';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { CONTENT_SERVICE } from 'src/config/services';
 import { envs } from 'src/config';
