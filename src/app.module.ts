@@ -9,7 +9,8 @@ import { EventAttendanceModule } from './content/modules';
 import { EventReviewsModule } from './content/modules';
 import { PostReactionsModule } from './content/modules';
 import { SocialMediaModule } from './users/modules/social_media/social-media.module';
-import { PasswordResetsModule } from './users/modules';
+import { PasswordResetsModule, UserFollowsModule } from './users/modules';
+import { UserStatsModule } from './users/modules/user_stats/user-stats.module';
 
 @Module({
   imports: [
@@ -27,6 +28,8 @@ import { PasswordResetsModule } from './users/modules';
     SavedPostsModule,
     PostsModule,
     PasswordResetsModule,
+    UserFollowsModule,
+    UserStatsModule
   ],
 })
 export class AppModule {}
