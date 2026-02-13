@@ -1,6 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
-import { UsersModule } from './users/users.module.js';
+import { UsersModule } from './users/modules/users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { NotificationsModule } from './notifications/notifications.module';
 import { PostsModule, SavedPostsModule } from './content/modules';
@@ -8,6 +8,7 @@ import { EventsModule } from './content/modules';
 import { EventAttendanceModule } from './content/modules';
 import { EventReviewsModule } from './content/modules';
 import { PostReactionsModule } from './content/modules';
+import { SocialMediaModule } from './users/modules/social_media/social-media.module';
 
 @Module({
   imports: [
@@ -21,6 +22,7 @@ import { PostReactionsModule } from './content/modules';
     EventAttendanceModule,
     EventReviewsModule,
     PostReactionsModule,
+    SocialMediaModule,
     SavedPostsModule,
     PostsModule,
   ],

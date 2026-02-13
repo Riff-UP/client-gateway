@@ -1,2 +1,4 @@
-export * from './create-user.dto'
-export * from './update-user.dto'
+export * from './users/create-user.dto'
+export * from './users/update-user.dto'
+export * from './social-media/create-social-media.dto'
+export * from './social-media/update-social-media.dto'

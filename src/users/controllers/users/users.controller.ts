@@ -1,7 +1,7 @@
 import { Controller, Get, Post, Body, Patch, Param, Delete, Inject } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { USERS_SERVICE } from '../config/services.js';
-import { CreateUserDto, UpdateUserDto } from './dto/index.js';
+import { USERS_SERVICE } from '../../../config/services.js';
+import { CreateUserDto, UpdateUserDto } from '../../dto/index.js';
 
 @Controller('users')
 export class UsersController {

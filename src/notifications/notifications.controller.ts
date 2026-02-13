@@ -25,7 +25,7 @@ export class NotificationsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() updateNotificationDto: UpdateNotificationDto) {
+  update(@Param('id') id: string, @Body() updateNotificationDto: CreateNotificationDto) {
     return this.notificationsClient.send('updateNotification', {id, ...updateNotificationDto})
   }
 

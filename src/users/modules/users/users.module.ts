@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
-import { UsersController } from './users.controller.js';
+import { UsersController } from '../../controllers/users/users.controller.js';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { USERS_SERVICE } from '../config/services.js';
-import { envs } from '../config/index.js';
+import { USERS_SERVICE } from '../../../config/services.js';
+import { envs } from '../../../config/index.js';
 
 @Module({
   controllers: [UsersController],
