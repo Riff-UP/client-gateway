@@ -5,12 +5,28 @@ interface EnvVars{
     PORT: number;
     USERS_MICROSERVICE_HOST: string;
     USERS_MICROSERVICE_PORT: number;
+
+    NOTIFICATIONS_MICROSERVICE_HOST: string;
+    NOTIFICATIONS_MICROSERVICE_PORT: number;
+
+    CONTENT_MICROSERVICE_HOST: string;
+    CONTENT_MICROSERVICE_PORT: number;
+
+    SESSION_SECRET: string;
 }
 
 const envSchema = joi.object({
     PORT: joi.number().required(),
     USERS_MICROSERVICE_HOST: joi.string().required(),
     USERS_MICROSERVICE_PORT: joi.number().required(),
+
+    NOTIFICATIONS_MICROSERVICE_HOST: joi.string().required(),
+    NOTIFICATIONS_MICROSERVICE_PORT: joi.number().required(),
+
+    CONTENT_MICROSERVICE_HOST: joi.string().required(),
+    CONTENT_MICROSERVICE_PORT: joi.number().required(),
+
+    SESSION_SECRET: joi.string().required(),
 }).unknown(true)
 
 const {error, value} = envSchema.validate(process.env)
@@ -25,4 +41,12 @@ export const envs = {
     port: envVars.PORT,
     usersMsHost: envVars.USERS_MICROSERVICE_HOST,
     usersMsPort: envVars.USERS_MICROSERVICE_PORT,
+
+    notificationsMsHost: envVars.NOTIFICATIONS_MICROSERVICE_HOST,
+    notificationsMsPort: envVars.NOTIFICATIONS_MICROSERVICE_PORT,
+
+    contentMsHost: envVars.CONTENT_MICROSERVICE_HOST,
+    contentMsPort: envVars.CONTENT_MICROSERVICE_PORT,
+
+    sessionSecret: envVars.SESSION_SECRET,
 }
