@@ -9,6 +9,7 @@ import { EventAttendanceModule } from './content/modules';
 import { EventReviewsModule } from './content/modules';
 import { PostReactionsModule } from './content/modules';
 import { SocialMediaModule } from './users/modules/social_media/social-media.module';
+import { PasswordResetsModule } from './users/modules';
 
 @Module({
   imports: [
@@ -25,6 +26,7 @@ import { SocialMediaModule } from './users/modules/social_media/social-media.mod
     SocialMediaModule,
     SavedPostsModule,
     PostsModule,
+    PasswordResetsModule,
   ],
 })
 export class AppModule {}
