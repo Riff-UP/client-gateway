@@ -13,6 +13,8 @@ interface EnvVars{
     CONTENT_MICROSERVICE_PORT: number;
 
     SESSION_SECRET: string;
+    JWT_SECRET: string;
+    JWT_EXPIRATION: string;
 }
 
 const envSchema = joi.object({
@@ -27,6 +29,8 @@ const envSchema = joi.object({
     CONTENT_MICROSERVICE_PORT: joi.number().required(),
 
     SESSION_SECRET: joi.string().required(),
+    JWT_SECRET: joi.string().required(),
+    JWT_EXPIRATION: joi.string().default('24h'),
 }).unknown(true)
 
 const {error, value} = envSchema.validate(process.env)
@@ -49,4 +53,6 @@ export const envs = {
     contentMsPort: envVars.CONTENT_MICROSERVICE_PORT,
 
     sessionSecret: envVars.SESSION_SECRET,
+    jwtSecret: envVars.JWT_SECRET,
+    jwtExpiration: envVars.JWT_EXPIRATION,
 }

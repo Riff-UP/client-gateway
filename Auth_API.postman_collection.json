@@ -1,0 +1,204 @@
+{
+  "info": {
+    "name": "Auth API - JWT",
+    "description": "Colección de endpoints de autenticación con JWT",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "item": [
+    {
+      "name": "1. Login Manual",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"email\": \"usuario@ejemplo.com\",\n  \"userId\": \"user123\",\n  \"password\": \"optional\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/login",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "login"]
+        },
+        "description": "Endpoint para login manual. Retorna un JWT token."
+      },
+      "response": [
+        {
+          "name": "Success Response",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"userId\": \"user123\",\n    \"email\": \"usuario@ejemplo.com\",\n    \"firstName\": null,\n    \"lastName\": null\n  }\n}"
+        }
+      ],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Guardar el token automáticamente",
+              "if (pm.response.code === 200) {",
+              "    var jsonData = pm.response.json();",
+              "    pm.environment.set(\"access_token\", jsonData.access_token);",
+              "    console.log(\"Token guardado:\", jsonData.access_token);",
+              "}"
+            ]
+          }
+        }
+      ]
+    },
+    {
+      "name": "2. Login con Google",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/auth/google",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "google"]
+        },
+        "description": "Inicia el flujo de autenticación con Google OAuth. Redirige a Google."
+      }
+    },
+    {
+      "name": "3. Google Callback",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/auth/google/callback",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "google", "callback"]
+        },
+        "description": "Callback de Google OAuth. Normalmente manejado automáticamente por Google."
+      },
+      "response": [
+        {
+          "name": "Success Response",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"message\": \"Usuario autenticado por Google\",\n  \"access_token\": \"eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9...\",\n  \"user\": {\n    \"userId\": \"117682928292\",\n    \"email\": \"user@gmail.com\",\n    \"firstName\": \"Juan\",\n    \"lastName\": \"Pérez\"\n  }\n}"
+        }
+      ]
+    },
+    {
+      "name": "4. Get Profile (Protected)",
+      "request": {
+        "method": "GET",
+        "header": [
+          {
+            "key": "Authorization",
+            "value": "Bearer {{access_token}}",
+            "description": "JWT token obtenido del login"
+          }
+        ],
+        "url": {
+          "raw": "{{base_url}}/auth/profile",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "profile"]
+        },
+        "description": "Ruta protegida que requiere JWT. Retorna el perfil del usuario autenticado."
+      },
+      "response": [
+        {
+          "name": "Success Response",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"message\": \"Perfil del usuario\",\n  \"user\": {\n    \"userId\": \"user123\",\n    \"email\": \"usuario@ejemplo.com\"\n  }\n}"
+        },
+        {
+          "name": "Unauthorized",
+          "status": "Unauthorized",
+          "code": 401,
+          "body": "{\n  \"statusCode\": 401,\n  \"message\": \"Unauthorized\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "5. Verify Token",
+      "request": {
+        "method": "POST",
+        "header": [
+          {
+            "key": "Content-Type",
+            "value": "application/json"
+          }
+        ],
+        "body": {
+          "mode": "raw",
+          "raw": "{\n  \"token\": \"{{access_token}}\"\n}"
+        },
+        "url": {
+          "raw": "{{base_url}}/auth/verify-token",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "verify-token"]
+        },
+        "description": "Verifica si un token JWT es válido."
+      },
+      "response": [
+        {
+          "name": "Valid Token",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"valid\": true,\n  \"payload\": {\n    \"sub\": \"user123\",\n    \"email\": \"usuario@ejemplo.com\",\n    \"iat\": 1640000000,\n    \"exp\": 1640086400\n  }\n}"
+        },
+        {
+          "name": "Invalid Token",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"valid\": false,\n  \"message\": \"Token inválido o expirado\"\n}"
+        }
+      ]
+    },
+    {
+      "name": "6. Logout",
+      "request": {
+        "method": "GET",
+        "header": [],
+        "url": {
+          "raw": "{{base_url}}/auth/logout",
+          "host": ["{{base_url}}"],
+          "path": ["auth", "logout"]
+        },
+        "description": "Cierra la sesión del usuario."
+      },
+      "response": [
+        {
+          "name": "Success Response",
+          "status": "OK",
+          "code": 200,
+          "body": "{\n  \"message\": \"Sesión cerrada exitosamente\"\n}"
+        }
+      ],
+      "event": [
+        {
+          "listen": "test",
+          "script": {
+            "exec": [
+              "// Limpiar el token después del logout",
+              "if (pm.response.code === 200) {",
+              "    pm.environment.unset(\"access_token\");",
+              "    console.log(\"Token eliminado\");",
+              "}"
+            ]
+          }
+        }
+      ]
+    }
+  ],
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "http://localhost:4000",
+      "type": "string"
+    },
+    {
+      "key": "access_token",
+      "value": "",
+      "type": "string"
+    }
+  ]
+}
