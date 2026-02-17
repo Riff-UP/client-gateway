@@ -1,6 +1,7 @@
 import { Body, Controller, Delete, Get, Inject, Param, Patch, Post } from "@nestjs/common";
 import { ClientProxy } from "@nestjs/microservices";
 import { CONTENT_SERVICE } from "src/config/services";
+import { CreateSavedPostDto } from "../../dto";
 
 
 @Controller('posts/saved')
@@ -10,8 +11,8 @@ export class SavedPostsController {
     ){}
 
     @Post()
-    create(){
-        return this.savedPostsService.send('createSavedPost', {})
+    create(@Body() createSavedPostDto: CreateSavedPostDto){
+        return this.savedPostsService.send('createSavedPost', createSavedPostDto || {})
     }
 
     @Get()
