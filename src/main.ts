@@ -1,6 +1,6 @@
 import { NestFactory } from '@nestjs/core';
 import { AppModule } from './app.module.js';
-import { Logger } from '@nestjs/common';
+import { Logger, ValidationPipe } from '@nestjs/common';
 import { envs } from './config/index.js';
 import session from 'express-session';
 import passport from 'passport';
@@ -24,6 +24,14 @@ async function bootstrap() {
       },
     }),
   );
+
+  app.useGlobalPipes(
+    new ValidationPipe({
+      whitelist: true,
+      forbidNonWhitelisted: true,
+      transform: true
+    })
+  )
 
   // Inicializar Passport y sesiones
   app.use(passport.initialize());

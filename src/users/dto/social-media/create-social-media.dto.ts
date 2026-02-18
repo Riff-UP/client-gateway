@@ -1,1 +1,4 @@
-export class CreateSMDto {}
+export class CreateSMDto {
+  userId!: string;
+  url!: string;
+}
