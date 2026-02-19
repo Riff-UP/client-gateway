@@ -19,16 +19,16 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
-    const { email, firstName, lastName, googleId } = req.user;  // ← corregido
+    const { email, firstName, lastName, googleId } = req.user;
 
     try {
-      // 1. Buscar si el usuario ya existe por email
+      // Buscar si el usuario ya existe por email
       const existingUser = await firstValueFrom(
         this.authClient.send('findUserByEmail', { email })
       );
 
       if (existingUser) {
-        // 2a. Usuario existe → generar token y redirigir
+        // Si el usuario existe generar token y redirigir
         const token = await firstValueFrom(
           this.authClient.send('generateToken', existingUser)
         );
@@ -36,10 +36,10 @@ export class AuthController {
       }
 
     } catch (error) {
-      // 2b. Usuario no existe → crear cuenta nueva
+      // Si el usuario no existe crear cuenta nueva
       const newUser = await firstValueFrom(
         this.authClient.send('createUserGoogle', {
-          name: `${firstName} ${lastName}`,  // ← corregido
+          name: `${firstName} ${lastName}`,
           email,
           googleId,
           password: '',
