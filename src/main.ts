@@ -6,12 +6,11 @@ import session from 'express-session';
 import passport from 'passport';
 
 async function bootstrap() {
-
-  const logger = new Logger('Client-GateWay')
+  const logger = new Logger('Client-GateWay');
 
   const app = await NestFactory.create(AppModule);
 
-  app.setGlobalPrefix('api')
+  app.setGlobalPrefix('api');
 
   // Configurar sesiones
   app.use(
