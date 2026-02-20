@@ -1,4 +1,4 @@
-import { Controller, Get, Inject, Req, Res, UseGuards } from '@nestjs/common';
+import { Controller, Get, Inject, Post, Body, Req, Res, UseGuards } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ClientProxy } from '@nestjs/microservices';
 import { USERS_SERVICE } from 'src/config/services';
@@ -75,4 +75,10 @@ export class AuthController {
       }
     });
   }
+
+  @Post('login')
+  login(@Body() payload: { email: string; password: string }) {
+  return this.authClient.send('login', payload);
+  }
+
 }
