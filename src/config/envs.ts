@@ -13,6 +13,7 @@ interface EnvVars{
     CONTENT_MICROSERVICE_PORT: number;
 
     SESSION_SECRET: string;
+    RABBIT_URL: string;
 }
 
 const envSchema = joi.object({
@@ -27,6 +28,7 @@ const envSchema = joi.object({
     CONTENT_MICROSERVICE_PORT: joi.number().required(),
 
     SESSION_SECRET: joi.string().required(),
+    RABBIT_URL: joi.string().required()
 }).unknown(true)
 
 const {error, value} = envSchema.validate(process.env)
@@ -49,4 +51,5 @@ export const envs = {
     contentMsPort: envVars.CONTENT_MICROSERVICE_PORT,
 
     sessionSecret: envVars.SESSION_SECRET,
+    rabbitUrl: envVars.RABBIT_URL
 }

@@ -11,10 +11,13 @@ import { envs } from '../config/index.js';
     ClientsModule.register([
       {
         name: NOTIFICATIONS_SERVICE,
-        transport: Transport.TCP,
+        transport: Transport.RMQ,
         options: {
-          host: envs.notificationsMsHost,
-          port: envs.notificationsMsPort,
+          urls: [envs.rabbitUrl],
+          queue: 'riff_queue',
+          queueOptions: {
+            durable: true,
+          },
         },
       },
     ]),
