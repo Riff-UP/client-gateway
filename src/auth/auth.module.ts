@@ -3,8 +3,8 @@ import { PassportModule } from '@nestjs/passport';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { AuthController } from './auth.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { USERS_SERVICE } from 'src/config/services';
-import { envs } from 'src/config';
+import { USERS_SERVICE } from '../config/services.js';
+import { envs } from '../config/index.js';
 
 @Module({
   imports: [
@@ -16,9 +16,9 @@ import { envs } from 'src/config';
         options: {
           host: envs.usersMsHost,
           port: envs.usersMsPort,
-        }
-      }
-    ])
+        },
+      },
+    ]),
   ],
   controllers: [AuthController],
   providers: [GoogleStrategy],

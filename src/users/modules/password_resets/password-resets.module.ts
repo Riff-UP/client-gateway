@@ -1,8 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { envs } from 'src/config';
-import { USERS_SERVICE } from 'src/config/services';
-import { PasswordResetsController } from 'src/users/controllers';
+import { envs } from '../../../config/index.js';
+import { USERS_SERVICE } from '../../../config/services.js';
+import { PasswordResetsController } from '../../controllers/index.js';
 
 @Module({
   controllers: [PasswordResetsController],

@@ -13,19 +13,24 @@ import {
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { catchError, firstValueFrom } from 'rxjs';
-import { USERS_SERVICE } from 'src/config/services';
-import { CreateSMDto, UpdateSMDto } from 'src/users/dto';
+import { USERS_SERVICE } from '../../../config/services.js';
+import { CreateSMDto, UpdateSMDto } from '../../dto/index.js';
 
-function getHttpStatus(err: any, fallback = HttpStatus.INTERNAL_SERVER_ERROR): number {
+function getHttpStatus(
+  err: any,
+  fallback = HttpStatus.INTERNAL_SERVER_ERROR,
+): number {
   const status = Number(err?.status);
-  return Number.isInteger(status) && status >= 100 && status < 600 ? status : fallback;
+  return Number.isInteger(status) && status >= 100 && status < 600
+    ? status
+    : fallback;
 }
 
 @Controller('sm')
 export class SocialMediaController {
   constructor(
     @Inject(USERS_SERVICE) private readonly socialMediaClient: ClientProxy,
-  ) { }
+  ) {}
 
   @Post()
   create(@Body() createSMDto: CreateSMDto) {

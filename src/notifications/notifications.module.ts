@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { NotificationsController } from './notifications.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { NOTIFICATIONS_SERVICE } from 'src/config/services';
+import { NOTIFICATIONS_SERVICE } from '../config/services.js';
 import { envs } from '../config/index.js';
 
 @Module({
@@ -14,10 +14,10 @@ import { envs } from '../config/index.js';
         transport: Transport.TCP,
         options: {
           host: envs.notificationsMsHost,
-          port: envs.notificationsMsPort
-        }
-      }
-    ])
-  ]
+          port: envs.notificationsMsPort,
+        },
+      },
+    ]),
+  ],
 })
 export class NotificationsModule {}

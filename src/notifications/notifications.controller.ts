@@ -1,22 +1,37 @@
-import { Controller, Get, Post, Body, Delete, Param, Inject } from '@nestjs/common';
-import { NOTIFICATIONS_SERVICE } from 'src/config/services';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Delete,
+  Param,
+  Inject,
+} from '@nestjs/common';
+import { NOTIFICATIONS_SERVICE } from '../config/services.js';
 import { ClientProxy } from '@nestjs/microservices';
 import { CreateNotificationDto } from './dto/index.js';
 
 @Controller('notifications')
 export class NotificationsController {
   constructor(
-    @Inject(NOTIFICATIONS_SERVICE) private readonly notificationsClient: ClientProxy
+    @Inject(NOTIFICATIONS_SERVICE)
+    private readonly notificationsClient: ClientProxy,
   ) {}
 
   @Post()
   create(@Body() createNotificationDto: CreateNotificationDto) {
-    return this.notificationsClient.send('createNotification', createNotificationDto);
+    return this.notificationsClient.send(
+      'createNotification',
+      createNotificationDto,
+    );
   }
 
   @Get(':userIdReceiver')
   findAll(@Param('userIdReceiver') userIdReceiver: string) {
-    return this.notificationsClient.send('findAllNotifications', userIdReceiver);
+    return this.notificationsClient.send(
+      'findAllNotifications',
+      userIdReceiver,
+    );
   }
 
   @Delete(':id')

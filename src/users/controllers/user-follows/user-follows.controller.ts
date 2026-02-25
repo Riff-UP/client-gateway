@@ -1,14 +1,7 @@
-import {
-  Body,
-  Controller,
-  Get,
-  Inject,
-  Param,
-  Post,
-} from '@nestjs/common';
+import { Body, Controller, Get, Inject, Param, Post } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { USERS_SERVICE } from 'src/config/services';
-import { CreateUFDto } from 'src/users/dto';
+import { USERS_SERVICE } from '../../../config/services.js';
+import { CreateUFDto } from '../../dto/index.js';
 
 @Controller('follows')
 export class UserFollowsController {

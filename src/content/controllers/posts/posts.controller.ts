@@ -1,12 +1,21 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Inject } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Inject,
+} from '@nestjs/common';
 import { CreatePostsDto, UpdatePostsDto } from '../../dto';
-import { CONTENT_SERVICE } from 'src/config/services';
+import { CONTENT_SERVICE } from '../../../config/services.js';
 import { ClientProxy } from '@nestjs/microservices';
 
 @Controller('posts')
 export class PostsController {
   constructor(
-    @Inject(CONTENT_SERVICE) private readonly contentService: ClientProxy
+    @Inject(CONTENT_SERVICE) private readonly contentService: ClientProxy,
   ) {}
 
   @Post()
@@ -31,6 +40,6 @@ export class PostsController {
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.contentService.send('removePost', id)
+    return this.contentService.send('removePost', id);
   }
 }

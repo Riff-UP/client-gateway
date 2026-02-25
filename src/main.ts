@@ -28,9 +28,9 @@ async function bootstrap() {
     new ValidationPipe({
       whitelist: true,
       forbidNonWhitelisted: true,
-      transform: true
-    })
-  )
+      transform: true,
+    }),
+  );
 
   // Inicializar Passport y sesiones
   app.use(passport.initialize());
@@ -49,4 +49,4 @@ async function bootstrap() {
 
   logger.log(`Client-GateWay is running on port ${envs.port}`);
 }
-bootstrap();
+void bootstrap();

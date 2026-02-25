@@ -1,12 +1,6 @@
-import {
-  Controller,
-  Get,
-  Inject,
-  Param,
-  Post,
-} from '@nestjs/common';
+import { Controller, Get, Inject, Param, Post } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { USERS_SERVICE } from 'src/config/services';
+import { USERS_SERVICE } from '../../../config/services.js';
 
 @Controller('users/me/stats')
 export class UserStatsController {
