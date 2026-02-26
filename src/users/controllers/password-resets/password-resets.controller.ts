@@ -9,37 +9,27 @@ import {
   Param,
   Patch,
   Post,
-  ServiceUnavailableException,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { USERS_SERVICE } from '../../../config/services.js';
+import {
+  USERS_SERVICE,
+  NOTIFICATIONS_SERVICE,
+} from '../../../config/services.js';
 import { CreatePRDto, MailDto } from '../../dto/index.js';
-import { catchError } from 'rxjs';
 
 @Controller('auth/password/reset')
 export class PasswordResetsController {
   constructor(
     @Inject(USERS_SERVICE) private readonly passwordResetsClient: ClientProxy,
+    @Inject(NOTIFICATIONS_SERVICE)
+    private readonly notificationsClient: ClientProxy,
   ) {}
 
   @Post('send')
   @HttpCode(HttpStatus.OK)
   sendPasswordReset(@Body() mailDto: MailDto) {
-    return this.passwordResetsClient.send('sendPasswordReset', mailDto).pipe(
-      catchError((error: unknown) => {
-        if (
-          typeof error === 'object' &&
-          error !== null &&
-          'code' in error &&
-          (error as { code?: string }).code === 'ECONNREFUSED'
-        ) {
-          throw new ServiceUnavailableException(
-            'Users microservice is unavailable',
-          );
-        }
-        throw error;
-      }),
-    );
+    this.notificationsClient.emit('send.resetPassword', mailDto);
+    return { message: 'Password reset email sent' };
   }
 
   @Post()
