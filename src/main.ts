@@ -4,6 +4,7 @@ import { Logger, ValidationPipe } from '@nestjs/common';
 import { envs } from './config/index.js';
 import session from 'express-session';
 import passport from 'passport';
+import { RpcCustomExceptionFilter } from './common/index.js';
 
 async function bootstrap() {
   const logger = new Logger('Client-GateWay');
@@ -23,6 +24,8 @@ async function bootstrap() {
       },
     }),
   );
+
+  app.useGlobalFilters(new RpcCustomExceptionFilter())
 
   app.useGlobalPipes(
     new ValidationPipe({

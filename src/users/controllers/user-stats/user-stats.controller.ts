@@ -1,6 +1,7 @@
 import { Controller, Get, Inject, Param, Patch } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { USERS_SERVICE } from '../../../config/services.js';
+import { handleRpcCustomError } from '../../../common/index.js';
 
 @Controller('user-stats')
 export class UserStatsController {
@@ -11,12 +12,16 @@ export class UserStatsController {
   // GET /user-stats/:sqlUserId
   @Get(':sqlUserId')
   findOne(@Param('sqlUserId') sqlUserId: string) {
-    return this.userStatsClient.send('findUserStats', sqlUserId);
+    return this.userStatsClient.send('findUserStats', sqlUserId).pipe(
+      handleRpcCustomError()
+    )
   }
 
   // PATCH /user-stats/:sqlUserId/views
   @Patch(':sqlUserId/views')
   incrementProfileViews(@Param('sqlUserId') sqlUserId: string) {
-    return this.userStatsClient.send('incrementProfileViews', sqlUserId);
+    return this.userStatsClient.send('incrementProfileViews', sqlUserId).pipe(
+      handleRpcCustomError()
+    )
   }
 }
