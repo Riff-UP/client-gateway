@@ -1,4 +1,14 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Inject, ParseUUIDPipe } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Inject,
+  ParseUUIDPipe,
+} from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { USERS_SERVICE } from '../../../config/services.js';
 import { CreateUserDto, UpdateUserDto } from '../../dto/index.js';
@@ -7,42 +17,61 @@ import { firstValueFrom } from 'rxjs';
 @Controller('users')
 export class UsersController {
   constructor(
-    @Inject(USERS_SERVICE) private readonly usersClient : ClientProxy
+    @Inject(USERS_SERVICE) private readonly usersClient: ClientProxy,
   ) {}
 
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
-    return this.usersClient.send('createUser', createUserDto || {})
+    return this.usersClient.send('createUser', createUserDto || {});
   }
 
   @Get()
   findAll() {
-    return this.usersClient.send('findAllUsers', {})
+    return this.usersClient.send('findAllUsers', {});
   }
 
   @Get(':id')
   async findOne(@Param('id', ParseUUIDPipe) id: string) {
-
-    try{
-
+    try {
       const user = await firstValueFrom(
-        this.usersClient.send('findOneUser', id)
-      )
-      return user
-
-    }catch(error){
-      throw new Error(`User with id ${id} not found`)
+        this.usersClient.send('findOneUser', id),
+      );
+      return user;
+    } catch (error) {
+      throw new Error(`User with id ${id} not found`);
     }
-
   }
 
   @Patch(':id')
-  update(@Param('id', ParseUUIDPipe) id: string, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersClient.send('updateUser', {id, ...updateUserDto});
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateUserDto: UpdateUserDto,
+  ) {
+    return this.usersClient.send('updateUser', { id, ...updateUserDto });
   }
 
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersClient.send('removeUser', id);
+  }
+
+  @Post('find-by-email')
+  findByEmail(@Body() body: { email: string }) {
+    return this.usersClient.send('findUserByEmail', body);
+  }
+
+  @Post('generate-token')
+  generateToken(@Body() body: { user: any }) {
+    return this.usersClient.send('generateToken', body);
+  }
+
+  @Post('google')
+  createUserGoogle(@Body() body: { payload: any }) {
+    return this.usersClient.send('createUserGoogle', body);
+  }
+
+  @Post('login')
+  login(@Body() body: { email: string; password: string }) {
+    return this.usersClient.send('login', body);
   }
 }

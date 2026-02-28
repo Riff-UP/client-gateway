@@ -3,14 +3,14 @@ import { ClientProxy } from '@nestjs/microservices';
 import { USERS_SERVICE } from '../../../config/services.js';
 import { CreateUFDto } from '../../dto/index.js';
 
-@Controller('follows')
+@Controller('user-follows')
 export class UserFollowsController {
   constructor(
     @Inject(USERS_SERVICE) private readonly userFollowsClient: ClientProxy,
   ) {}
 
-  // POST /follows/toggle
-  @Post('toggle')
+  // POST /user-follows
+  @Post()
   toggleFollow(@Body() createUFDto: CreateUFDto) {
     return this.userFollowsClient.send('toggleUserFollow', createUFDto);
   }

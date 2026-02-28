@@ -29,7 +29,7 @@ import { UserStatsModule } from './users/modules/user_stats/user-stats.module';
     PostsModule,
     PasswordResetsModule,
     UserFollowsModule,
-    UserStatsModule
+    UserStatsModule,
   ],
 })
 export class AppModule {}

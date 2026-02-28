@@ -26,7 +26,7 @@ function getHttpStatus(
     : fallback;
 }
 
-@Controller('sm')
+@Controller('social-media')
 export class SocialMediaController {
   constructor(
     @Inject(USERS_SERVICE) private readonly socialMediaClient: ClientProxy,

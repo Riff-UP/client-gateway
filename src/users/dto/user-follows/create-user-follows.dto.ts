@@ -1,10 +1,9 @@
-import { IsString } from "class-validator";
+import { IsString } from 'class-validator';
 
 export class CreateUFDto {
+  @IsString()
+  followerId!: string;
 
-    @IsString()    
-    followerId!: string
-
-    @IsString()
-    followedId!: string
+  @IsString()
+  followedId!: string;
 }

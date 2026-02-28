@@ -9,7 +9,6 @@ export enum NotificationType {
 }
 
 export class CreateNotificationDto {
-
   @IsString()
   @IsNotEmpty()
   userIdReceiver!: string;

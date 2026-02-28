@@ -12,12 +12,12 @@ import { envs } from '../../../config/index.js';
       {
         name: USERS_SERVICE,
         transport: Transport.TCP,
-        options:{
+        options: {
           host: envs.usersMsHost,
-          port: envs.usersMsPort
-        }
-      }
-    ])
-  ]
+          port: envs.usersMsPort,
+        },
+      },
+    ]),
+  ],
 })
 export class UsersModule {}

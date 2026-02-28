@@ -3,6 +3,7 @@ export * from './users/update-user.dto';
 export * from './social-media/create-social-media.dto';
 export * from './social-media/update-social-media.dto';
 export * from './password-resets/create-password-reset.dto';
+export * from './password-resets/update-password-reset.dto';
 export * from './password-resets/mail.dto';
 export * from './user-follows/create-user-follows.dto';
 export * from './user-follows/update-user-follows.dto';

@@ -15,9 +15,9 @@ import {
   USERS_SERVICE,
   NOTIFICATIONS_SERVICE,
 } from '../../../config/services.js';
-import { CreatePRDto, MailDto } from '../../dto/index.js';
+import { CreatePRDto, UpdatePRDto, MailDto } from '../../dto/index.js';
 
-@Controller('auth/password/reset')
+@Controller('password-resets')
 export class PasswordResetsController {
   constructor(
     @Inject(USERS_SERVICE) private readonly passwordResetsClient: ClientProxy,
@@ -51,10 +51,10 @@ export class PasswordResetsController {
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() CreatePRDto: CreatePRDto) {
+  update(@Param('id') id: string, @Body() updatePRDto: UpdatePRDto) {
     return this.passwordResetsClient.send('updatePasswordReset', {
       id,
-      ...CreatePRDto,
+      ...updatePRDto,
     });
   }
 

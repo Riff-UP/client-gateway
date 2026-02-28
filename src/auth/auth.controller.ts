@@ -10,7 +10,7 @@ import {
 } from '@nestjs/common';
 import { AuthGuard } from '@nestjs/passport';
 import { ClientProxy } from '@nestjs/microservices';
-import { USERS_SERVICE } from '../config/services.js';
+import { USERS_SERVICE, EVENTS_SERVICE } from '../config/services.js';
 import type { Request, Response } from 'express';
 import { firstValueFrom } from 'rxjs';
 
@@ -18,6 +18,7 @@ import { firstValueFrom } from 'rxjs';
 export class AuthController {
   constructor(
     @Inject(USERS_SERVICE) private readonly authClient: ClientProxy,
+    @Inject(EVENTS_SERVICE) private readonly eventsClient: ClientProxy,
   ) {}
 
   @Get('google')
@@ -40,6 +41,11 @@ export class AuthController {
         const token = await firstValueFrom(
           this.authClient.send('generateToken', existingUser),
         );
+        // Emitir evento para que otros microservicios lo consuman
+        this.eventsClient.emit('auth.tokenGenerated', {
+          user: existingUser,
+          token,
+        });
         return res.redirect(`http://localhost:3000/home?token=${token}`);
       }
     } catch (error) {
@@ -57,6 +63,12 @@ export class AuthController {
       const token = await firstValueFrom(
         this.authClient.send('generateToken', newUser),
       );
+
+      // Emitir evento para que otros microservicios lo consuman
+      this.eventsClient.emit('auth.tokenGenerated', {
+        user: newUser,
+        token,
+      });
 
       return res.redirect(`http://localhost:3000/home?token=${token}`);
     }
