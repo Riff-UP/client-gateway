@@ -2,7 +2,6 @@ import {
   Body,
   Controller,
   Delete,
-  Get,
   Inject,
   Param,
   Patch,
@@ -11,6 +10,7 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import { CONTENT_SERVICE } from '../../../config/services.js';
 import { CreatePostReactionsDto } from '../../dto/index.js';
+import { handleRpcCustomError } from '../../../common/index.js';
 
 @Controller('posts/reactions')
 export class PostReactionsController {
@@ -23,11 +23,15 @@ export class PostReactionsController {
     return this.postReactionsService.send(
       'createPostReaction',
       createPostReactionsDto || {},
-    );
+    ).pipe(
+      handleRpcCustomError()
+    )
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.postReactionsService.send('removePostReaction', id);
+    return this.postReactionsService.send('removePostReaction', id).pipe(
+      handleRpcCustomError()
+    )
   }
 }

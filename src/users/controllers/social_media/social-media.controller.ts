@@ -15,16 +15,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { catchError, firstValueFrom } from 'rxjs';
 import { USERS_SERVICE } from '../../../config/services.js';
 import { CreateSMDto, UpdateSMDto } from '../../dto/index.js';
-
-function getHttpStatus(
-  err: any,
-  fallback = HttpStatus.INTERNAL_SERVER_ERROR,
-): number {
-  const status = Number(err?.status);
-  return Number.isInteger(status) && status >= 100 && status < 600
-    ? status
-    : fallback;
-}
+import { handleRpcCustomError } from '../../../common/index.js';
 
 @Controller('sm')
 export class SocialMediaController {
@@ -34,61 +25,39 @@ export class SocialMediaController {
 
   @Post()
   create(@Body() createSMDto: CreateSMDto) {
-    return this.socialMediaClient.send('createSocialMedia', createSMDto || {});
+    return this.socialMediaClient.send('createSocialMedia', createSMDto || {}).pipe(
+      handleRpcCustomError()
+    )
   }
 
   @Get()
   findAll() {
-    return this.socialMediaClient.send('findAllSocialMedia', {});
+    return this.socialMediaClient.send('findAllSocialMedia', {}).pipe(
+      handleRpcCustomError()
+    )
   }
 
   @Get(':id')
-  async findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return firstValueFrom(
-      this.socialMediaClient.send('findOneSocialMedia', id).pipe(
-        catchError((err) => {
-          throw new HttpException(
-            err.message || `Social media with id ${id} not found`,
-            getHttpStatus(err, HttpStatus.NOT_FOUND),
-          );
-        }),
-      ),
-    );
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.socialMediaClient.send('findOneSocialMedia', id).pipe(
+      handleRpcCustomError()
+    )
   }
 
   @Patch(':id')
-  async update(
+  update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSMDto: UpdateSMDto,
   ) {
-    return firstValueFrom(
-      this.socialMediaClient
-        .send('updateSocialMedia', {
-          id,
-          ...updateSMDto,
-        })
-        .pipe(
-          catchError((err) => {
-            throw new HttpException(
-              err.message || `Failed to update social media with id ${id}`,
-              getHttpStatus(err),
-            );
-          }),
-        ),
-    );
+    return this.socialMediaClient.send('updateSocialMedia', {id, ...updateSMDto}).pipe(
+      handleRpcCustomError()
+    )
   }
 
   @Delete(':id')
-  async remove(@Param('id', ParseUUIDPipe) id: string) {
-    return firstValueFrom(
-      this.socialMediaClient.send('removeSocialMedia', id).pipe(
-        catchError((err) => {
-          throw new HttpException(
-            err.message || `Failed to delete social media with id ${id}`,
-            getHttpStatus(err),
-          );
-        }),
-      ),
-    );
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.socialMediaClient.send('removeSocialMedia', id).pipe(
+      handleRpcCustomError()
+    )
   }
 }
