@@ -7,19 +7,20 @@ import {
   Param,
   Delete,
   Inject,
+  Query,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { CONTENT_SERVICE, USERS_SERVICE } from '../../../config/services';
 import { CreateEventDto, UpdateEventDto } from '../../dto';
 import { catchError, firstValueFrom } from 'rxjs';
-import { handleRpcCustomError } from '../../../common/index';
+import { handleRpcCustomError, PaginationDto } from '../../../common/index';
 
 @Controller('events')
 export class EventsController {
   constructor(
     @Inject(CONTENT_SERVICE) private readonly eventService: ClientProxy,
     @Inject(USERS_SERVICE) private readonly usersService: ClientProxy,
-  ) {}
+  ) { }
 
   @Post()
   async create(@Body() createEventDto: CreateEventDto) {
@@ -38,9 +39,9 @@ export class EventsController {
   }
 
   @Get()
-  findAll() {
+  findAll(@Query() paginationDto: PaginationDto) {
     return this.eventService
-      .send('findAllEvents', {})
+      .send('findAllEvents', paginationDto)
       .pipe(catchError(handleRpcCustomError));
   }
 

@@ -7,18 +7,19 @@ import {
   Param,
   Delete,
   Inject,
+  Query,
 } from '@nestjs/common';
 import { CreatePostDto, UpdatePostsDto } from '../../dto';
 import { CONTENT_SERVICE } from '../../../config/services.js';
 import { ClientProxy } from '@nestjs/microservices';
-import { handleRpcCustomError } from '../../../common';
+import { handleRpcCustomError, PaginationDto } from '../../../common';
 import { catchError } from 'rxjs';
 
 @Controller('posts')
 export class PostsController {
   constructor(
     @Inject(CONTENT_SERVICE) private readonly contentService: ClientProxy,
-  ) {}
+  ) { }
 
   @Post()
   create(@Body() createPostsDto: CreatePostDto) {
@@ -28,9 +29,9 @@ export class PostsController {
   }
 
   @Get()
-  findAll() {
+  findAll(@Query() paginationDto: PaginationDto) {
     return this.contentService
-      .send('findAllPosts', {})
+      .send('findAllPosts', paginationDto)
       .pipe(catchError(handleRpcCustomError));
   }
 

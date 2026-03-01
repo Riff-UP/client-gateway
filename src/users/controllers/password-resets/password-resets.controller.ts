@@ -15,7 +15,7 @@ import {
   USERS_SERVICE,
   NOTIFICATIONS_SERVICE,
 } from '../../../config/services.js';
-import { CreatePRDto, MailDto } from '../../dto/index.js';
+import { CreatePRDto, MailDto, ResetPasswordDto } from '../../dto/index.js';
 import { handleRpcCustomError } from '../../../common/index.js';
 import { catchError, firstValueFrom } from 'rxjs';
 
@@ -76,6 +76,13 @@ export class PasswordResetsController {
   findOne(@Param('id') id: string) {
     return this.passwordResetsClient
       .send('findOnePasswordReset', id)
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  @Patch('reset')
+  resetPassword(@Body() resetPasswordDto: ResetPasswordDto) {
+    return this.passwordResetsClient
+      .send('updatePasswordReset', resetPasswordDto)
       .pipe(catchError(handleRpcCustomError));
   }
 

@@ -1,0 +1,25 @@
+services:
+  client-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: riff_client_gateway
+    restart: always
+    ports:
+      - ${PORT:-3000}:${PORT:-3000}
+    environment:
+      - PORT=${PORT:-3000}
+      - USERS_MICROSERVICE_HOST=${USERS_MICROSERVICE_HOST}
+      - USERS_MICROSERVICE_PORT=${USERS_MICROSERVICE_PORT}
+      - NOTIFICATIONS_MICROSERVICE_HOST=${NOTIFICATIONS_MICROSERVICE_HOST}
+      - NOTIFICATIONS_MICROSERVICE_PORT=${NOTIFICATIONS_MICROSERVICE_PORT}
+      - CONTENT_MICROSERVICE_HOST=${CONTENT_MICROSERVICE_HOST}
+      - CONTENT_MICROSERVICE_PORT=${CONTENT_MICROSERVICE_PORT}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - RABBIT_URL=${RABBIT_URL}
+    networks:
+      - gateway-network
+
+networks:
+  gateway-network:
+    driver: bridge
