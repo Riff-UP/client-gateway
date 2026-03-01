@@ -21,32 +21,29 @@ export class EventReviewsController {
 
   @Post()
   create(@Body() createEventReviewDto: CreateEventReviewsDto) {
-    return this.eventReviewsService.send(
-      'createEventReview',
-      createEventReviewDto || {},
-    ).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.eventReviewsService
+      .send('createEventReview', createEventReviewDto || {})
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Get()
   findAll() {
-    return this.eventReviewsService.send('findAllEventReviews', {}).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.eventReviewsService
+      .send('findAllEventReviews', {})
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.eventReviewsService.send('findOneEventReview', id).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.eventReviewsService
+      .send('findOneEventReview', id)
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.eventReviewsService.send('removeEventReview', id).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.eventReviewsService
+      .send('removeEventReview', id)
+      .pipe(catchError(handleRpcCustomError));
   }
 }

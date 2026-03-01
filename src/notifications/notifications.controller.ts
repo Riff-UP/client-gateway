@@ -22,45 +22,36 @@ export class NotificationsController {
 
   @Post()
   create(@Body() createNotificationDto: CreateNotificationDto) {
-    return this.notificationsClient.send(
-      'createNotification',
-      createNotificationDto,
-    ).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.notificationsClient
+      .send('createNotification', createNotificationDto)
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Get()
   findAll() {
-    return this.notificationsClient.send(
-      'findAllNotifications',
-      {},
-    ).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.notificationsClient
+      .send('findAllNotifications', {})
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Get('user/:userIdReceiver')
   findByUser(@Param('userIdReceiver') userIdReceiver: string) {
-    return this.notificationsClient.send(
-      'findNotificationsByUser',
-      userIdReceiver,
-    ).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.notificationsClient
+      .send('findNotificationsByUser', userIdReceiver)
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.notificationsClient.send('findOneNotification', id).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.notificationsClient
+      .send('findOneNotification', id)
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.notificationsClient.send('removeNotification', id).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.notificationsClient
+      .send('removeNotification', id)
+      .pipe(catchError(handleRpcCustomError));
   }
 }

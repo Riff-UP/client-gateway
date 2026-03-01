@@ -22,25 +22,22 @@ export class EventAttendanceController {
 
   @Post()
   create(@Body() createEventAttendanceDto: CreateEventAttendanceDto) {
-    return this.eventAttendanceService.send(
-      'createEventAttendance',
-      createEventAttendanceDto || {},
-    ).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.eventAttendanceService
+      .send('createEventAttendance', createEventAttendanceDto || {})
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Get()
   findAll() {
-    return this.eventAttendanceService.send('findAllEventAttendances', {}).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.eventAttendanceService
+      .send('findAllEventAttendances', {})
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.eventAttendanceService.send('removeEventAttendance', id).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.eventAttendanceService
+      .send('removeEventAttendance', id)
+      .pipe(catchError(handleRpcCustomError));
   }
 }

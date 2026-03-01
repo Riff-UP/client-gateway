@@ -25,7 +25,7 @@ async function bootstrap() {
     }),
   );
 
-  app.useGlobalFilters(new RpcCustomExceptionFilter())
+  app.useGlobalFilters(new RpcCustomExceptionFilter());
 
   app.useGlobalPipes(
     new ValidationPipe({

@@ -21,9 +21,9 @@ import { envs } from '../../../config/index';
         transport: Transport.TCP,
         options: {
           host: envs.usersMsHost,
-          port: envs.usersMsPort
-        }
-      }
+          port: envs.usersMsPort,
+        },
+      },
     ]),
   ],
 })

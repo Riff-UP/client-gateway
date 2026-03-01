@@ -21,18 +21,15 @@ export class PostReactionsController {
 
   @Post()
   create(@Body() createPostReactionsDto: CreatePostReactionsDto) {
-    return this.postReactionsService.send(
-      'createPostReaction',
-      createPostReactionsDto || {},
-    ).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.postReactionsService
+      .send('createPostReaction', createPostReactionsDto || {})
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.postReactionsService.send('removePostReaction', id).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.postReactionsService
+      .send('removePostReaction', id)
+      .pipe(catchError(handleRpcCustomError));
   }
 }

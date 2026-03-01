@@ -13,16 +13,16 @@ export class UserStatsController {
   // GET /user-stats/:sqlUserId
   @Get(':sqlUserId')
   findOne(@Param('sqlUserId') sqlUserId: string) {
-    return this.userStatsClient.send('findUserStats', sqlUserId).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.userStatsClient
+      .send('findUserStats', sqlUserId)
+      .pipe(catchError(handleRpcCustomError));
   }
 
   // PATCH /user-stats/:sqlUserId/views
   @Patch(':sqlUserId/views')
   incrementProfileViews(@Param('sqlUserId') sqlUserId: string) {
-    return this.userStatsClient.send('incrementProfileViews', sqlUserId).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.userStatsClient
+      .send('incrementProfileViews', sqlUserId)
+      .pipe(catchError(handleRpcCustomError));
   }
 }

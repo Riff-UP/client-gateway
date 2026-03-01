@@ -1,12 +1,14 @@
 import { RpcException } from '@nestjs/microservices';
 import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 
-export class RpcCustomExceptionHelper{
+export class RpcCustomExceptionHelper {
   static notFound(resource: string, id?: string) {
     throw new RpcException({
       statusCode: HttpStatus.NOT_FOUND,
       code: 'NOT_FOUND',
-      message: id ? `${resource} with id ${id} not found` : `${resource} not found`,
+      message: id
+        ? `${resource} with id ${id} not found`
+        : `${resource} not found`,
     });
   }
 
@@ -34,7 +36,7 @@ export class RpcCustomExceptionHelper{
     });
   }
 
-   static internal(message: string = 'Internal server error') {
+  static internal(message: string = 'Internal server error') {
     throw new RpcException({
       statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
       code: 'INTERNAL_SERVER_ERROR',
@@ -44,7 +46,7 @@ export class RpcCustomExceptionHelper{
 }
 export const handleRpcCustomError = (error: any): never => {
   const logger = new Logger('RpcExceptionHandler');
-  
+
   if (error && error.statusCode && error.message) {
     throw new HttpException(
       {

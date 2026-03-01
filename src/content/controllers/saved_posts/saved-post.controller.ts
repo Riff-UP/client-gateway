@@ -21,25 +21,22 @@ export class SavedPostsController {
 
   @Post()
   create(@Body() createSavedPostDto: CreateSavedPostDto) {
-    return this.savedPostsService.send(
-      'createSavedPost',
-      createSavedPostDto || {},
-    ).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.savedPostsService
+      .send('createSavedPost', createSavedPostDto || {})
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Get()
   findAll() {
-    return this.savedPostsService.send('findAllSavedPosts', {}).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.savedPostsService
+      .send('findAllSavedPosts', {})
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.savedPostsService.send('removeSavedPost', id).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.savedPostsService
+      .send('removeSavedPost', id)
+      .pipe(catchError(handleRpcCustomError));
   }
 }

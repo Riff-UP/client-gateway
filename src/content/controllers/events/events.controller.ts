@@ -24,57 +24,73 @@ export class EventsController {
   @Post()
   async create(@Body() createEventDto: CreateEventDto) {
     const followers = await firstValueFrom(
-      this.usersService.send('findFollowers', { userId: createEventDto.sql_user_id })
+      this.usersService.send('findFollowers', {
+        userId: createEventDto.sql_user_id,
+      }),
     );
 
-    return this.eventService.send('createEvent', {
-      ...createEventDto,
-      followers,
-    }).pipe(
-      catchError(handleRpcCustomError)
-    );
+    return this.eventService
+      .send('createEvent', {
+        ...createEventDto,
+        followers,
+      })
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Get()
   findAll() {
-    return this.eventService.send('findAllEvents', {}).pipe(catchError(handleRpcCustomError));
+    return this.eventService
+      .send('findAllEvents', {})
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.eventService.send('findOneEvent', id).pipe(catchError(handleRpcCustomError));
+    return this.eventService
+      .send('findOneEvent', id)
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateEventDto: UpdateEventDto) {
+  async update(
+    @Param('id') id: string,
+    @Body() updateEventDto: UpdateEventDto,
+  ) {
     let followers: string[] = [];
 
     if (updateEventDto.sql_user_id) {
       followers = await firstValueFrom(
-        this.usersService.send('findFollowers', { userId: updateEventDto.sql_user_id })
+        this.usersService.send('findFollowers', {
+          userId: updateEventDto.sql_user_id,
+        }),
       ).catch(() => []);
     }
 
-    return this.eventService.send('updateEvent', {
-      id,
-      ...updateEventDto,
-      followers,
-    }).pipe(catchError(handleRpcCustomError));
+    return this.eventService
+      .send('updateEvent', {
+        id,
+        ...updateEventDto,
+        followers,
+      })
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string, @Body() body: { sql_user_id?: string }) {
+  async remove(
+    @Param('id') id: string,
+    @Body() body: { sql_user_id?: string },
+  ) {
     let followers = [];
 
     // Solo buscamos seguidores si se manda el id del usuario
     if (body && body.sql_user_id) {
       followers = await firstValueFrom(
-        this.usersService.send('findFollowers', { userId: body.sql_user_id })
+        this.usersService.send('findFollowers', { userId: body.sql_user_id }),
       ).catch(() => []);
     }
 
-    return this.eventService.send('removeEvent', { id, followers }).pipe(
-      catchError(handleRpcCustomError)
-    );
+    return this.eventService
+      .send('removeEvent', { id, followers })
+      .pipe(catchError(handleRpcCustomError));
   }
 }

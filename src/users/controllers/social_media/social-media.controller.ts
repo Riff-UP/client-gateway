@@ -25,23 +25,23 @@ export class SocialMediaController {
 
   @Post()
   create(@Body() createSMDto: CreateSMDto) {
-    return this.socialMediaClient.send('createSocialMedia', createSMDto || {}).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.socialMediaClient
+      .send('createSocialMedia', createSMDto || {})
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Get()
   findAll() {
-    return this.socialMediaClient.send('findAllSocialMedia', {}).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.socialMediaClient
+      .send('findAllSocialMedia', {})
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.socialMediaClient.send('findOneSocialMedia', id).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.socialMediaClient
+      .send('findOneSocialMedia', id)
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Patch(':id')
@@ -49,15 +49,15 @@ export class SocialMediaController {
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateSMDto: UpdateSMDto,
   ) {
-    return this.socialMediaClient.send('updateSocialMedia', {id, ...updateSMDto}).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.socialMediaClient
+      .send('updateSocialMedia', { id, ...updateSMDto })
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.socialMediaClient.send('removeSocialMedia', id).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.socialMediaClient
+      .send('removeSocialMedia', id)
+      .pipe(catchError(handleRpcCustomError));
   }
 }

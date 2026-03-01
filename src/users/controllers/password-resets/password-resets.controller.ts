@@ -25,46 +25,46 @@ export class PasswordResetsController {
   @Post('send')
   @HttpCode(HttpStatus.OK)
   sendPasswordReset(@Body() mailDto: MailDto) {
-    return this.passwordResetsClient.send('sendPasswordReset', mailDto).pipe(
-      catchError(handleRpcCustomError)
-    );
+    return this.passwordResetsClient
+      .send('sendPasswordReset', mailDto)
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Post()
   create(@Body() createPRDto: CreatePRDto) {
-    return this.passwordResetsClient.send('createPasswordReset', createPRDto).pipe(
-      catchError(handleRpcCustomError)
-    );
+    return this.passwordResetsClient
+      .send('createPasswordReset', createPRDto)
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Get()
   findAll() {
-    return this.passwordResetsClient.send('findAllPasswordResets', {}).pipe(
-      catchError(handleRpcCustomError)
-    );
+    return this.passwordResetsClient
+      .send('findAllPasswordResets', {})
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.passwordResetsClient.send('findOnePasswordReset', id).pipe(
-      catchError(handleRpcCustomError)
-    );
+    return this.passwordResetsClient
+      .send('findOnePasswordReset', id)
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() createPRDto: CreatePRDto) {
-    return this.passwordResetsClient.send('updatePasswordReset', {
-      id,
-      ...createPRDto,
-    }).pipe(
-      catchError(handleRpcCustomError)
-    );
+    return this.passwordResetsClient
+      .send('updatePasswordReset', {
+        id,
+        ...createPRDto,
+      })
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
-    return this.passwordResetsClient.send('removePasswordReset', id).pipe(
-      catchError(handleRpcCustomError)
-    );
+    return this.passwordResetsClient
+      .send('removePasswordReset', id)
+      .pipe(catchError(handleRpcCustomError));
   }
 }

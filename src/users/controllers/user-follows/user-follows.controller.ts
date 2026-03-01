@@ -14,17 +14,17 @@ export class UserFollowsController {
   // POST /user-follows
   @Post()
   toggleFollow(@Body() createUFDto: CreateUFDto) {
-    return this.userFollowsClient.send('toggleUserFollow', createUFDto).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.userFollowsClient
+      .send('toggleUserFollow', createUFDto)
+      .pipe(catchError(handleRpcCustomError));
   }
 
   // GET /follows/:followerId
   @Get(':followerId')
   findAll(@Param('followerId') followerId: string) {
-    return this.userFollowsClient.send('findAllUserFollows', followerId).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.userFollowsClient
+      .send('findAllUserFollows', followerId)
+      .pipe(catchError(handleRpcCustomError));
   }
 
   // GET /follows/:followerId/:followedId
@@ -33,11 +33,11 @@ export class UserFollowsController {
     @Param('followerId') followerId: string,
     @Param('followedId') followedId: string,
   ) {
-    return this.userFollowsClient.send('findOneUserFollow', {
-      followerId,
-      followedId,
-    }).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.userFollowsClient
+      .send('findOneUserFollow', {
+        followerId,
+        followedId,
+      })
+      .pipe(catchError(handleRpcCustomError));
   }
 }
