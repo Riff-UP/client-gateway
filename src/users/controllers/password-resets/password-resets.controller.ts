@@ -14,6 +14,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { USERS_SERVICE } from '../../../config/services.js';
 import { CreatePRDto, MailDto } from '../../dto/index.js';
 import { handleRpcCustomError } from '../../../common/index.js';
+import { catchError } from 'rxjs';
 
 @Controller('password-resets')
 export class PasswordResetsController {
@@ -25,28 +26,28 @@ export class PasswordResetsController {
   @HttpCode(HttpStatus.OK)
   sendPasswordReset(@Body() mailDto: MailDto) {
     return this.passwordResetsClient.send('sendPasswordReset', mailDto).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     );
   }
 
   @Post()
   create(@Body() createPRDto: CreatePRDto) {
     return this.passwordResetsClient.send('createPasswordReset', createPRDto).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     );
   }
 
   @Get()
   findAll() {
     return this.passwordResetsClient.send('findAllPasswordResets', {}).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     );
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.passwordResetsClient.send('findOnePasswordReset', id).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     );
   }
 
@@ -56,14 +57,14 @@ export class PasswordResetsController {
       id,
       ...createPRDto,
     }).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     );
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.passwordResetsClient.send('removePasswordReset', id).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     );
   }
 }

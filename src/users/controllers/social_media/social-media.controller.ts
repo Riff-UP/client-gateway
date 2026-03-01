@@ -26,21 +26,21 @@ export class SocialMediaController {
   @Post()
   create(@Body() createSMDto: CreateSMDto) {
     return this.socialMediaClient.send('createSocialMedia', createSMDto || {}).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 
   @Get()
   findAll() {
     return this.socialMediaClient.send('findAllSocialMedia', {}).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.socialMediaClient.send('findOneSocialMedia', id).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 
@@ -50,14 +50,14 @@ export class SocialMediaController {
     @Body() updateSMDto: UpdateSMDto,
   ) {
     return this.socialMediaClient.send('updateSocialMedia', {id, ...updateSMDto}).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string) {
     return this.socialMediaClient.send('removeSocialMedia', id).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 }

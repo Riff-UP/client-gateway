@@ -9,10 +9,10 @@ import {
   Inject,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { CONTENT_SERVICE, USERS_SERVICE } from '../../../config/services.js';
-import { CreateEventDto } from '../../dto';
-import { firstValueFrom } from 'rxjs';
-import { handleRpcCustomError } from '../../../common/index.js';
+import { CONTENT_SERVICE, USERS_SERVICE } from '../../../config/services';
+import { CreateEventDto, UpdateEventDto } from '../../dto';
+import { catchError, firstValueFrom } from 'rxjs';
+import { handleRpcCustomError } from '../../../common/index';
 
 @Controller('events')
 export class EventsController {
@@ -30,40 +30,51 @@ export class EventsController {
     return this.eventService.send('createEvent', {
       ...createEventDto,
       followers,
-    }).pipe(handleRpcCustomError());
+    }).pipe(
+      catchError(handleRpcCustomError)
+    );
   }
 
   @Get()
   findAll() {
-    return this.eventService.send('findAllEvents', {}).pipe(handleRpcCustomError());
+    return this.eventService.send('findAllEvents', {}).pipe(catchError(handleRpcCustomError));
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
-    return this.eventService.send('findOneEvent', id).pipe(handleRpcCustomError());
+    return this.eventService.send('findOneEvent', id).pipe(catchError(handleRpcCustomError));
   }
 
   @Patch(':id')
-  async update(@Param('id') id: string, @Body() updateEventDto: CreateEventDto) {
-    const followers = await firstValueFrom(
-      this.usersService.send('findFollowers', { userId: updateEventDto.sql_user_id })
-    );
+  async update(@Param('id') id: string, @Body() updateEventDto: UpdateEventDto) {
+    let followers: string[] = [];
+
+    if (updateEventDto.sql_user_id) {
+      followers = await firstValueFrom(
+        this.usersService.send('findFollowers', { userId: updateEventDto.sql_user_id })
+      ).catch(() => []);
+    }
 
     return this.eventService.send('updateEvent', {
       id,
       ...updateEventDto,
       followers,
-    }).pipe(handleRpcCustomError());
+    }).pipe(catchError(handleRpcCustomError));
   }
 
   @Delete(':id')
-  async remove(@Param('id') id: string, @Body() body: { sql_user_id: string }) {
-    const followers = await firstValueFrom(
-      this.usersService.send('findFollowers', { userId: body.sql_user_id })
-    );
+  async remove(@Param('id') id: string, @Body() body: { sql_user_id?: string }) {
+    let followers = [];
+
+    // Solo buscamos seguidores si se manda el id del usuario
+    if (body && body.sql_user_id) {
+      followers = await firstValueFrom(
+        this.usersService.send('findFollowers', { userId: body.sql_user_id })
+      ).catch(() => []);
+    }
 
     return this.eventService.send('removeEvent', { id, followers }).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     );
   }
 }

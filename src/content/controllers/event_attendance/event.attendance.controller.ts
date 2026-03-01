@@ -10,6 +10,7 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import { CONTENT_SERVICE } from '../../../config/services.js';
 import { CreateEventAttendanceDto } from '../../dto';
+import { catchError } from 'rxjs';
 import { handleRpcCustomError } from '../../../common/index.js';
 
 @Controller('events/attendance')
@@ -25,21 +26,21 @@ export class EventAttendanceController {
       'createEventAttendance',
       createEventAttendanceDto || {},
     ).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 
   @Get()
   findAll() {
     return this.eventAttendanceService.send('findAllEventAttendances', {}).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.eventAttendanceService.send('removeEventAttendance', id).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 }

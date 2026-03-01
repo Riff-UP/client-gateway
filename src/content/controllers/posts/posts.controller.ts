@@ -8,10 +8,11 @@ import {
   Delete,
   Inject,
 } from '@nestjs/common';
-import { CreatePostsDto, UpdatePostsDto } from '../../dto';
+import { CreatePostDto, UpdatePostsDto } from '../../dto';
 import { CONTENT_SERVICE } from '../../../config/services.js';
 import { ClientProxy } from '@nestjs/microservices';
 import { handleRpcCustomError } from '../../../common';
+import { catchError } from 'rxjs';
 
 @Controller('posts')
 export class PostsController {
@@ -20,37 +21,37 @@ export class PostsController {
   ) {}
 
   @Post()
-  create(@Body() createPostsDto: CreatePostsDto) {
+  create(@Body() createPostsDto: CreatePostDto) {
     return this.contentService.send('createPost', createPostsDto || {}).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 
   @Get()
   findAll() {
     return this.contentService.send('findAllPosts', {}).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.contentService.send('findOnePost', id).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 
   @Patch(':id')
   update(@Param('id') id: string, @Body() updatePostsDto: UpdatePostsDto) {
     return this.contentService.send('updatePost', { id, ...updatePostsDto }).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.contentService.send('removePost', id).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 }
