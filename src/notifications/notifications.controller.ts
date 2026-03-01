@@ -11,6 +11,7 @@ import { NOTIFICATIONS_SERVICE } from '../config/services.js';
 import { ClientProxy } from '@nestjs/microservices';
 import { CreateNotificationDto } from './dto/index.js';
 import { handleRpcCustomError } from '../common/index.js';
+import { catchError } from 'rxjs';
 
 @Controller('notifications')
 export class NotificationsController {
@@ -25,24 +26,41 @@ export class NotificationsController {
       'createNotification',
       createNotificationDto,
     ).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 
-  @Get(':userIdReceiver')
-  findAll(@Param('userIdReceiver') userIdReceiver: string) {
+  @Get()
+  findAll() {
     return this.notificationsClient.send(
       'findAllNotifications',
+      {},
+    ).pipe(
+      catchError(handleRpcCustomError)
+    )
+  }
+
+  @Get('user/:userIdReceiver')
+  findByUser(@Param('userIdReceiver') userIdReceiver: string) {
+    return this.notificationsClient.send(
+      'findNotificationsByUser',
       userIdReceiver,
     ).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
+    )
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.notificationsClient.send('findOneNotification', id).pipe(
+      catchError(handleRpcCustomError)
     )
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.notificationsClient.send('removeNotification', id).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 }

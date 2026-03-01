@@ -1,1 +1,24 @@
-export class CreatePRDto {}
+import {
+  IsBoolean,
+  IsDateString,
+  IsNotEmpty,
+  IsOptional,
+  IsString,
+} from 'class-validator';
+
+export class CreatePRDto {
+  @IsString()
+  @IsNotEmpty()
+  userId!: string;
+
+  @IsString()
+  @IsNotEmpty()
+  token!: string;
+
+  @IsDateString()
+  expiresAt!: Date;
+
+  @IsBoolean()
+  @IsOptional()
+  used!: boolean;
+}

@@ -1,5 +1,5 @@
 import { RpcException } from '@nestjs/microservices';
-import { HttpStatus } from '@nestjs/common';
+import { HttpException, HttpStatus, Logger } from '@nestjs/common';
 
 export class RpcCustomExceptionHelper{
   static notFound(resource: string, id?: string) {
@@ -42,3 +42,24 @@ export class RpcCustomExceptionHelper{
     });
   }
 }
+export const handleRpcCustomError = (error: any): never => {
+  const logger = new Logger('RpcExceptionHandler');
+  
+  if (error && error.statusCode && error.message) {
+    throw new HttpException(
+      {
+        statusCode: error.statusCode,
+        message: error.message,
+        error: error.code || 'RpcError',
+      },
+      error.statusCode,
+    );
+  }
+
+  // Fallback: Si el microservicio explota con un error desconocido (ej. base de datos caída)
+  logger.error(error);
+  throw new HttpException(
+    'Internal Server Error from Microservice',
+    HttpStatus.INTERNAL_SERVER_ERROR,
+  );
+};

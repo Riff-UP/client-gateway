@@ -3,6 +3,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { USERS_SERVICE } from '../../../config/services.js';
 import { CreateUFDto } from '../../dto/index.js';
 import { handleRpcCustomError } from '../../../common/index.js';
+import { catchError } from 'rxjs';
 
 @Controller('follows')
 export class UserFollowsController {
@@ -14,7 +15,7 @@ export class UserFollowsController {
   @Post('toggle')
   toggleFollow(@Body() createUFDto: CreateUFDto) {
     return this.userFollowsClient.send('toggleUserFollow', createUFDto).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 
@@ -22,7 +23,7 @@ export class UserFollowsController {
   @Get(':followerId')
   findAll(@Param('followerId') followerId: string) {
     return this.userFollowsClient.send('findAllUserFollows', followerId).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 
@@ -36,7 +37,7 @@ export class UserFollowsController {
       followerId,
       followedId,
     }).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 }

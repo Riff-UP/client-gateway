@@ -11,6 +11,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { CONTENT_SERVICE } from '../../../config/services.js';
 import { CreateSavedPostDto } from '../../dto';
 import { handleRpcCustomError } from '../../../common/index.js';
+import { catchError } from 'rxjs';
 
 @Controller('posts/saved')
 export class SavedPostsController {
@@ -24,21 +25,21 @@ export class SavedPostsController {
       'createSavedPost',
       createSavedPostDto || {},
     ).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 
   @Get()
   findAll() {
     return this.savedPostsService.send('findAllSavedPosts', {}).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.savedPostsService.send('removeSavedPost', id).pipe(
-      handleRpcCustomError()
+      catchError(handleRpcCustomError)
     )
   }
 }
