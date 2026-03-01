@@ -9,7 +9,7 @@ import { catchError } from 'rxjs';
 export class UserFollowsController {
   constructor(
     @Inject(USERS_SERVICE) private readonly userFollowsClient: ClientProxy,
-  ) {}
+  ) { }
 
   // POST /user-follows
   @Post()
@@ -19,7 +19,7 @@ export class UserFollowsController {
       .pipe(catchError(handleRpcCustomError));
   }
 
-  // GET /follows/:followerId
+  // GET /user-follows/:followerId
   @Get(':followerId')
   findAll(@Param('followerId') followerId: string) {
     return this.userFollowsClient
@@ -27,7 +27,7 @@ export class UserFollowsController {
       .pipe(catchError(handleRpcCustomError));
   }
 
-  // GET /follows/:followerId/:followedId
+  // GET /user-follows/:followerId/:followedId
   @Get(':followerId/:followedId')
   findOne(
     @Param('followerId') followerId: string,
@@ -38,6 +38,14 @@ export class UserFollowsController {
         followerId,
         followedId,
       })
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  // GET /user-follows/followers/:userId
+  @Get('followers/:userId')
+  findFollowers(@Param('userId') userId: string) {
+    return this.userFollowsClient
+      .send('findFollowers', { userId })
       .pipe(catchError(handleRpcCustomError));
   }
 }

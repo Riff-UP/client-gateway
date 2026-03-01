@@ -17,7 +17,7 @@ import { catchError } from 'rxjs';
 export class SavedPostsController {
   constructor(
     @Inject(CONTENT_SERVICE) private readonly savedPostsService: ClientProxy,
-  ) {}
+  ) { }
 
   @Post()
   create(@Body() createSavedPostDto: CreateSavedPostDto) {
@@ -30,6 +30,13 @@ export class SavedPostsController {
   findAll() {
     return this.savedPostsService
       .send('findAllSavedPosts', {})
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  @Get('user/:sqlUserId')
+  findByUser(@Param('sqlUserId') sqlUserId: string) {
+    return this.savedPostsService
+      .send('findSavedPostsByUser', { sql_user_id: sqlUserId })
       .pipe(catchError(handleRpcCustomError));
   }
 

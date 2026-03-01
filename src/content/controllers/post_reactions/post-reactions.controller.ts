@@ -2,9 +2,9 @@ import {
   Body,
   Controller,
   Delete,
+  Get,
   Inject,
   Param,
-  Patch,
   Post,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
@@ -17,12 +17,19 @@ import { catchError } from 'rxjs';
 export class PostReactionsController {
   constructor(
     @Inject(CONTENT_SERVICE) private readonly postReactionsService: ClientProxy,
-  ) {}
+  ) { }
 
   @Post()
   create(@Body() createPostReactionsDto: CreatePostReactionsDto) {
     return this.postReactionsService
       .send('createPostReaction', createPostReactionsDto || {})
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  @Get('post/:postId')
+  findByPost(@Param('postId') postId: string) {
+    return this.postReactionsService
+      .send('findReactionsByPost', { post_id: postId })
       .pipe(catchError(handleRpcCustomError));
   }
 

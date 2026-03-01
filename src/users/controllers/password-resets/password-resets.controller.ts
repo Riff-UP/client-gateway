@@ -11,23 +11,51 @@ import {
   Post,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { USERS_SERVICE } from '../../../config/services.js';
+import {
+  USERS_SERVICE,
+  NOTIFICATIONS_SERVICE,
+} from '../../../config/services.js';
 import { CreatePRDto, MailDto } from '../../dto/index.js';
 import { handleRpcCustomError } from '../../../common/index.js';
-import { catchError } from 'rxjs';
+import { catchError, firstValueFrom } from 'rxjs';
+
+interface ResetResult {
+  userId?: string;
+  id?: string;
+  userName?: string;
+  name?: string;
+  token?: string;
+}
 
 @Controller('password-resets')
 export class PasswordResetsController {
   constructor(
     @Inject(USERS_SERVICE) private readonly passwordResetsClient: ClientProxy,
-  ) {}
+    @Inject(NOTIFICATIONS_SERVICE)
+    private readonly notificationsClient: ClientProxy,
+  ) { }
 
   @Post('send')
   @HttpCode(HttpStatus.OK)
-  sendPasswordReset(@Body() mailDto: MailDto) {
-    return this.passwordResetsClient
-      .send('sendPasswordReset', mailDto)
-      .pipe(catchError(handleRpcCustomError));
+  async sendPasswordReset(@Body() mailDto: MailDto) {
+    // Crear el reset en Users-MS y obtener token/datos
+    const result = (await firstValueFrom(
+      this.passwordResetsClient
+        .send('sendPasswordReset', mailDto)
+        .pipe(catchError(handleRpcCustomError)),
+    )) as ResetResult;
+
+    // Emitir evento para que Notifications-MS envíe el email
+    if (result) {
+      this.notificationsClient.emit('send.resetPassword', {
+        mail: mailDto.mail,
+        userId: result.userId ?? result.id,
+        userName: result.userName ?? result.name,
+        token: result.token,
+      });
+    }
+
+    return result;
   }
 
   @Post()

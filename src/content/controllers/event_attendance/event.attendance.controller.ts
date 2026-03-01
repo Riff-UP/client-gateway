@@ -5,6 +5,7 @@ import {
   Get,
   Inject,
   Param,
+  Patch,
   Post,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
@@ -18,7 +19,7 @@ export class EventAttendanceController {
   constructor(
     @Inject(CONTENT_SERVICE)
     private readonly eventAttendanceService: ClientProxy,
-  ) {}
+  ) { }
 
   @Post()
   create(@Body() createEventAttendanceDto: CreateEventAttendanceDto) {
@@ -31,6 +32,30 @@ export class EventAttendanceController {
   findAll() {
     return this.eventAttendanceService
       .send('findAllEventAttendances', {})
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  @Get('event/:eventId')
+  findByEvent(@Param('eventId') eventId: string) {
+    return this.eventAttendanceService
+      .send('findAttendanceByEvent', { event_id: eventId })
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.eventAttendanceService
+      .send('findOneEventAttendance', id)
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  @Patch(':id')
+  update(
+    @Param('id') id: string,
+    @Body() updateAttendanceDto: Partial<CreateEventAttendanceDto>,
+  ) {
+    return this.eventAttendanceService
+      .send('updateEventAttendance', { id, ...updateAttendanceDto })
       .pipe(catchError(handleRpcCustomError));
   }
 
