@@ -48,7 +48,7 @@ export class EventsController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.eventService
-      .send('findOneEvent', id)
+      .send('findOneEvent', {id})
       .pipe(catchError(handleRpcCustomError));
   }
 

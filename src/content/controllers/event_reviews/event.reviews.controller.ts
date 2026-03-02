@@ -44,7 +44,7 @@ export class EventReviewsController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.eventReviewsService
-      .send('findOneEventReview', id)
+      .send('findOneEventReview', { id })
       .pipe(catchError(handleRpcCustomError));
   }
 
@@ -61,7 +61,7 @@ export class EventReviewsController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.eventReviewsService
-      .send('removeEventReview', id)
+      .send('removeEventReview', { id })
       .pipe(catchError(handleRpcCustomError));
   }
 }
