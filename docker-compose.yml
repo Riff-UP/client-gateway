@@ -17,9 +17,12 @@ services:
       - CONTENT_MICROSERVICE_PORT=${CONTENT_MICROSERVICE_PORT}
       - SESSION_SECRET=${SESSION_SECRET}
       - RABBIT_URL=${RABBIT_URL}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL}
     networks:
-      - gateway-network
+      - riff-network
 
 networks:
-  gateway-network:
-    driver: bridge
+  riff-network:
+    external: true
