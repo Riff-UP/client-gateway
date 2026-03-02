@@ -1,0 +1,1 @@
+{"version":3,"file":"create-saved-post.dto.js","sourceRoot":"","sources":["../../../src/saved-posts/dto/create-saved-post.dto.ts"],"names":[],"mappings":";;;;;;;;;;;;AAAA,qDAAkE;AAElE,MAAa,kBAAkB;IAI7B,OAAO,CAAU;IAIjB,WAAW,CAAU;CACtB;AATD,gDASC;AALC;IAHC,IAAA,0BAAQ,GAAE;IACV,IAAA,4BAAU,GAAE;IACZ,IAAA,2BAAS,GAAE;;mDACK;AAIjB;IAFC,IAAA,0BAAQ,GAAE;IACV,IAAA,4BAAU,GAAE;;uDACQ"}

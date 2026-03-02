@@ -58,16 +58,23 @@ if (-not $IMAGE_URL) {
     ExitWithError "No IMAGE_URL provided and ImagePath not valid."
   }
 } else {
+  $IMAGE_URL = $IMAGE_URL.Trim()
   Write-Host "Using IMAGE_URL: $IMAGE_URL"
 }
 
-# Build post payload
-$postPayload = @{ sql_user_id = $SqlUserId; type = "image"; title = "Test Image Upload"; url = $IMAGE_URL; description = "Uploaded by automated test" }
+# Basic validation: ensure URL looks like http/https
+if (-not ($IMAGE_URL -match '^https?://')) {
+  ExitWithError "IMAGE_URL does not look like a valid http/https URL: $IMAGE_URL"
+}
+
+function Build-PostPayload($userId, $imageUrl) {
+  return @{ sql_user_id = $userId; type = "image"; title = "Test Image Upload"; content = $imageUrl; description = "Uploaded by automated test" }
+}
 
 Write-Host "Creating post..."
 
 # Attempt to create post with retries
-$maxAttempts = 3
+$maxAttempts = 5
 $attempt = 0
 $created = $false
 while ($attempt -lt $maxAttempts -and -not $created) {
@@ -75,6 +82,8 @@ while ($attempt -lt $maxAttempts -and -not $created) {
   Write-Host "Attempt $attempt of $maxAttempts to create post..."
   try {
     $headers = @{ Authorization = "Bearer $token" }
+    # Rebuild payload with current user id to ensure it is correct
+    $postPayload = Build-PostPayload $SqlUserId $IMAGE_URL
     $postBody = $postPayload | ConvertTo-Json
     $createResp = Invoke-RestMethod -Uri "$BaseUrl/posts" -Method Post -Body $postBody -ContentType 'application/json' -Headers $headers -ErrorAction Stop
     Write-Host "Post created successfully on attempt $attempt" -ForegroundColor Green
@@ -89,14 +98,18 @@ while ($attempt -lt $maxAttempts -and -not $created) {
     if ($err.Response -and $err.Response.Content) {
       try { $body = $err.Response.Content | ConvertFrom-Json } catch { $body = $err.Response.Content }
     }
-    if ($body -and ($body.message -like '*replicated*' -or $body.error -eq 'UNAUTHORIZED')) {
-      Write-Warning "Detected replication/unauthorized issue: $($body.message)"
+    $detectedReplication = $false
+    if ($body -and ($body.message -like '*replicated*' -or $body.error -eq 'UNAUTHORIZED')) { $detectedReplication = $true }
+    if (-not $detectedReplication -and $err.Message -and ($err.Message -match '401|Unauthorized|UNAUTHORIZED')) { $detectedReplication = $true }
+    if ($detectedReplication) {
+      Write-Warning "Detected replication/unauthorized issue: $($body -or $err.Message)"
       if ($attempt -lt $maxAttempts) {
         Write-Host "Waiting 5s before retrying..."
         Start-Sleep -Seconds 5
         continue
       }
     }
+    if ($body) { Write-Warning "Response body: $(ConvertTo-Json $body -Depth 5)" }
     if ($attempt -ge $maxAttempts) {
       Write-Warning "Max attempts reached and creation failed. Proceeding to attempt cleanup and re-register flow."
       # Try to delete user via gateway
@@ -138,8 +151,9 @@ while ($attempt -lt $maxAttempts -and -not $created) {
         $token = $loginResp2.token
         if (-not $token -and $loginResp2.user -and $loginResp2.user.token) { $token = $loginResp2.user.token }
         Write-Host "New token length: $($token.Length)"
-        if ($loginResp2.user -and ($loginResp2.user.id -or $loginResp2.user._id)) {
-          $SqlUserId = $loginResp2.user.id ?? $loginResp2.user._id
+        if ($loginResp2.user) {
+          if ($loginResp2.user.id) { $SqlUserId = $loginResp2.user.id }
+          elseif ($loginResp2.user._id) { $SqlUserId = $loginResp2.user._id }
           Write-Host "New sql_user_id: $SqlUserId"
         }
       } catch {
@@ -150,13 +164,39 @@ while ($attempt -lt $maxAttempts -and -not $created) {
       try {
         Write-Host "Final attempt to create post after re-register..."
         $headers = @{ Authorization = "Bearer $token" }
+        # rebuild payload after re-register to ensure new user id is used
+        $postPayload = Build-PostPayload $SqlUserId $IMAGE_URL
         $postBody = $postPayload | ConvertTo-Json
-        $createResp = Invoke-RestMethod -Uri "$BaseUrl/posts" -Method Post -Body $postBody -ContentType 'application/json' -Headers $headers -ErrorAction Stop
-        Write-Host "Post created successfully after re-register" -ForegroundColor Green
-        Write-Output ($createResp | ConvertTo-Json -Depth 5)
-        $created = $true
+        # Try multiple times to allow replication to propagate
+        $repAttempts = 12
+        $repAttempt = 0
+        while ($repAttempt -lt $repAttempts -and -not $created) {
+          $repAttempt++
+          try {
+            $createResp = Invoke-RestMethod -Uri "$BaseUrl/posts" -Method Post -Body $postBody -ContentType 'application/json' -Headers $headers -ErrorAction Stop
+            Write-Host "Post created successfully after re-register (attempt $repAttempt)" -ForegroundColor Green
+            Write-Output ($createResp | ConvertTo-Json -Depth 5)
+            $created = $true
+            break
+          } catch {
+            $e = $_.Exception
+            $body = $null
+            if ($e.Response -and $e.Response.Content) {
+              try { $body = $e.Response.Content | ConvertFrom-Json } catch { $body = $e.Response.Content }
+            }
+            if (($body -and $body.message -like '*replicated*') -or ($e.Message -and ($e.Message -match '401|Unauthorized|UNAUTHORIZED'))) {
+              Write-Warning "User not replicated yet. Waiting 10s before next attempt ($repAttempt/$repAttempts)..."
+              Start-Sleep -Seconds 10
+              continue
+            } else {
+              Write-Warning "Final create post attempt failed: $e"
+              if ($body) { Write-Warning "Response body: $(ConvertTo-Json $body -Depth 5)" }
+              break
+            }
+          }
+        }
       } catch {
-        Write-Warning "Final create post attempt failed: $_"
+        Write-Warning "Final create post error: $_"
       }
     }
   }

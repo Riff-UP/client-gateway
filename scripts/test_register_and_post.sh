@@ -6,7 +6,7 @@ set -euo pipefail
 # Requirements: curl, jq
 
 IMAGE_PATH=${1:-}
-BASE_URL=${BASE_URL:-http://localhost:4000/api}
+BASE_URL=${BASE_URL:-http://localhost:3000/api}
 EMAIL="243704@ids.upchiapas.edu.mx"
 PASSWORD="TestPass123!"
 NAME="Test User 243704"
@@ -27,13 +27,17 @@ else
   SED_FALLBACK=1
 fi
 
-if [ -z "$IMAGE_PATH" ]; then
-  echo "Usage: $0 /path/to/image.jpg" >&2
-  exit 1
-fi
-if [ ! -f "$IMAGE_PATH" ]; then
-  echo "Image file not found: $IMAGE_PATH" >&2
-  exit 1
+if [ -z "${IMAGE_URL:-}" ]; then
+  if [ -z "$IMAGE_PATH" ]; then
+    echo "Usage: $0 /path/to/image.jpg (or set IMAGE_URL env to skip upload)" >&2
+    exit 1
+  fi
+  if [ ! -f "$IMAGE_PATH" ]; then
+    echo "Image file not found: $IMAGE_PATH" >&2
+    exit 1
+  fi
+else
+  echo "IMAGE_URL provided via env, skipping local upload checks"
 fi
 
 echo "Base URL: $BASE_URL"
@@ -51,9 +55,31 @@ else
   TOKEN=$(printf '%s' "$LOGIN_RSP" | sed -n 's/.*"token"[[:space:]]*:[[:space:]]*"\([^"]\+\)".*/\1/p' | head -n1 || true)
 fi
 if [ -z "$TOKEN" ]; then
-  echo "Login failed or token not found. Response:" >&2
-  echo "$LOGIN_RSP" >&2
-  exit 1
+  echo "Login failed or token not found. Attempting to register the user..."
+  # Try to register the user via /users
+  REG_RSP=$(curl -s -X POST "$BASE_URL/users" \
+    -H "Content-Type: application/json" \
+    -d "{\"email\": \"$EMAIL\", \"password\": \"$PASSWORD\", \"name\": \"$NAME\"}")
+  echo "Register response: $REG_RSP"
+
+  # Retry login
+  LOGIN_RSP=$(curl -s -X POST "$BASE_URL/auth/login" \
+    -H "Content-Type: application/json" \
+    -d "{\"email\": \"$EMAIL\", \"password\": \"$PASSWORD\"}")
+
+  if [ -n "$JQ_BIN" ]; then
+    TOKEN=$(echo "$LOGIN_RSP" | jq -r '.token // empty')
+  elif [ -n "$PY_BIN" ]; then
+    TOKEN=$(printf '%s' "$LOGIN_RSP" | $PY_BIN -c "import sys,json; d=json.load(sys.stdin); print(d.get('token') or '')")
+  else
+    TOKEN=$(printf '%s' "$LOGIN_RSP" | sed -n 's/.*"token"[[:space:]]*:[[:space:]]*"\([^"]\+\)".*/\1/p' | head -n1 || true)
+  fi
+
+  if [ -z "$TOKEN" ]; then
+    echo "Login failed after registration. Response:" >&2
+    echo "$LOGIN_RSP" >&2
+    exit 1
+  fi
 fi
 echo "Token obtained. Length: ${#TOKEN} chars"
 
@@ -96,7 +122,7 @@ fi
 
 # 3) Create post with url field pointing to uploaded image
 echo "\n3) Creating post referencing uploaded image"
-CREATE_POST_PAY=$(printf '%s' "{\"sql_user_id\":\"%s\",\"type\":\"%s\",\"title\":\"%s\",\"url\":\"%s\",\"description\":\"%s\"}" "${SQL_USER_ID:-}" "image" "Test Image Upload" "$IMAGE_URL" "Uploaded by automated test")
+CREATE_POST_PAY=$(printf '%s' "{\"sql_user_id\":\"%s\",\"type\":\"%s\",\"title\":\"%s\",\"content\":\"%s\",\"description\":\"%s\"}" "${SQL_USER_ID:-}" "image" "Test Image Upload" "$IMAGE_URL" "Uploaded by automated test")
 
 CREATE_RSP=$(curl -s -w "\n%{http_code}" -X POST "$BASE_URL/posts" \
   -H "Content-Type: application/json" \

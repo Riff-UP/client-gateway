@@ -1,0 +1,20 @@
+version: '3.8'
+services:
+  # Override DNS for services that need external network access.
+  # Adjust service names to match your docker-compose if different.
+  content-ms:
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+  users-ms:
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+  notifications-ms:
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
+  client-gateway:
+    dns:
+      - 8.8.8.8
+      - 1.1.1.1
