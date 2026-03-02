@@ -23,6 +23,19 @@ services:
     networks:
       - riff-network
 
+  central-rabbit:
+    image: rabbitmq:3.12-management-alpine
+    container_name: riff_central_rabbit
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - '5675:5672'
+      - '15675:15672'
+    networks:
+      - riff-network
+
 networks:
   riff-network:
     external: true
