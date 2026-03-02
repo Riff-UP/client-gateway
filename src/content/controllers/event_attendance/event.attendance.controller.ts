@@ -28,13 +28,6 @@ export class EventAttendanceController {
       .pipe(catchError(handleRpcCustomError));
   }
 
-  @Get()
-  findAll() {
-    return this.eventAttendanceService
-      .send('findAllEventAttendances', {})
-      .pipe(catchError(handleRpcCustomError));
-  }
-
   @Get('event/:eventId')
   findByEvent(@Param('eventId') eventId: string) {
     return this.eventAttendanceService
@@ -45,7 +38,7 @@ export class EventAttendanceController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.eventAttendanceService
-      .send('findOneEventAttendance', id)
+      .send('findOneEventAttendance', {id})
       .pipe(catchError(handleRpcCustomError));
   }
 
@@ -62,7 +55,7 @@ export class EventAttendanceController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.eventAttendanceService
-      .send('removeEventAttendance', id)
+      .send('removeEventAttendance', {id})
       .pipe(catchError(handleRpcCustomError));
   }
 }
