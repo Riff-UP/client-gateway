@@ -8,12 +8,14 @@ import {
   Delete,
   Inject,
   Query,
+  UseGuards,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { CONTENT_SERVICE, USERS_SERVICE } from '../../../config/services';
-import { CreateEventDto, UpdateEventDto } from '../../dto';
+import { CreateEventDto, EventPaginationDto, UpdateEventDto } from '../../dto';
 import { catchError, firstValueFrom } from 'rxjs';
-import { handleRpcCustomError, PaginationDto } from '../../../common/index';
+import { CurrentUser, handleRpcCustomError, PaginationDto } from '../../../common/index';
+import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
 
 @Controller('events')
 export class EventsController {
@@ -22,24 +24,29 @@ export class EventsController {
     @Inject(USERS_SERVICE) private readonly usersService: ClientProxy,
   ) { }
 
+  @UseGuards(JwtAuthGuard)
   @Post()
-  async create(@Body() createEventDto: CreateEventDto) {
+  async create(
+    @Body() createEventDto: CreateEventDto,
+    @CurrentUser() user: { id: string; role: string },
+  ) {
+    const sql_user_id = user.id; // ← ya no viene del body
+
     const followers = await firstValueFrom(
-      this.usersService.send('findFollowers', {
-        userId: createEventDto.sql_user_id,
-      }),
+      this.usersService.send('findFollowers', { userId: sql_user_id }),
     );
 
     return this.eventService
-      .send('createEvent', {
-        ...createEventDto,
-        followers,
-      })
-      .pipe(catchError(handleRpcCustomError));
+    .send('createEvent', {
+      ...createEventDto,
+      sql_user_id,
+      followers,
+    })
+    .pipe(catchError(handleRpcCustomError));
   }
 
   @Get()
-  findAll(@Query() paginationDto: PaginationDto) {
+  findAll(@Query() paginationDto: EventPaginationDto) {
     return this.eventService
       .send('findAllEvents', paginationDto)
       .pipe(catchError(handleRpcCustomError));
@@ -52,46 +59,41 @@ export class EventsController {
       .pipe(catchError(handleRpcCustomError));
   }
 
+  @UseGuards(JwtAuthGuard)
   @Patch(':id')
   async update(
     @Param('id') id: string,
     @Body() updateEventDto: UpdateEventDto,
+    @CurrentUser() user: { id: string; role: string },
   ) {
-    let followers: string[] = [];
+    const sql_user_id = user.id;
 
-    if (updateEventDto.sql_user_id) {
-      followers = await firstValueFrom(
-        this.usersService.send('findFollowers', {
-          userId: updateEventDto.sql_user_id,
-        }),
-      ).catch(() => []);
-    }
+    const followers = await firstValueFrom(
+      this.usersService.send('findFollowers', { userId: sql_user_id }),
+    ).catch(() => []);
 
     return this.eventService
-      .send('updateEvent', {
-        id,
-        ...updateEventDto,
-        followers,
-      })
-      .pipe(catchError(handleRpcCustomError));
+    .send('updateEvent', {
+      id,
+      ...updateEventDto,
+      sql_user_id,
+      followers,
+    })
+    .pipe(catchError(handleRpcCustomError));
   }
 
+  @UseGuards(JwtAuthGuard)
   @Delete(':id')
   async remove(
     @Param('id') id: string,
-    @Body() body: { sql_user_id?: string },
+    @CurrentUser() user: { id: string; role: string },
   ) {
-    let followers = [];
+    const followers = await firstValueFrom(
+    this.usersService.send('findFollowers', { userId: user.id }),
+    ).catch(() => []);
 
-    // Solo buscamos seguidores si se manda el id del usuario
-    if (body && body.sql_user_id) {
-      followers = await firstValueFrom(
-        this.usersService.send('findFollowers', { userId: body.sql_user_id }),
-      ).catch(() => []);
-    }
-
-    return this.eventService
-      .send('removeEvent', { id, followers })
-      .pipe(catchError(handleRpcCustomError));
+  return this.eventService
+    .send('removeEvent', { id, followers })
+    .pipe(catchError(handleRpcCustomError));
   }
 }

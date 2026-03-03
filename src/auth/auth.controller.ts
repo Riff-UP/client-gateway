@@ -46,7 +46,7 @@ export class AuthController {
           user: existingUser,
           token,
         });
-        return res.redirect(`http://localhost:3000/home?token=${token}`);
+        return res.redirect(`http://localhost:3000/?token=${token}`);
       }
     } catch (error) {
       // Si el usuario no existe crear cuenta nueva
@@ -70,7 +70,7 @@ export class AuthController {
         token,
       });
 
-      return res.redirect(`http://localhost:3000/home?token=${token}`);
+      return res.redirect(`http://localhost:3000/?token=${token}`);
     }
   }
 

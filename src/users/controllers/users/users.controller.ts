@@ -8,12 +8,15 @@ import {
   Delete,
   Inject,
   ParseUUIDPipe,
+  UseGuards,
+  Query,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { USERS_SERVICE } from '../../../config/services.js';
 import { CreateUserDto, UpdateUserDto } from '../../dto/index.js';
-import { handleRpcCustomError } from '../../../common/index.js';
+import { handleRpcCustomError, CurrentUser } from '../../../common/index.js';
 import { catchError } from 'rxjs';
+import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard.js';
 
 @Controller('users')
 export class UsersController {
@@ -33,6 +36,20 @@ export class UsersController {
     return this.usersClient
       .send('findAllUsers', {})
       .pipe(catchError(handleRpcCustomError));
+  }
+
+  @Get('me')
+  @UseGuards(JwtAuthGuard)
+  getMe(@CurrentUser('id') userId: string) {
+    return this.usersClient.send('findOneUser', userId)
+    .pipe(catchError(handleRpcCustomError))
+  }
+
+  @Get('artists')
+  findAllArtists(@Query('search') search?: string) {
+    return this.usersClient
+    .send('findAllArtists', { search })
+    .pipe(catchError(handleRpcCustomError));
   }
 
   @Get(':id')

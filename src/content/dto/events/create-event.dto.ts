@@ -1,10 +1,8 @@
 import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
+import { PaginationDto } from '../../../common';
 
 export class CreateEventDto {
-  @IsString()
-  @IsNotEmpty()
-  sql_user_id!: string;
-
+  
   @IsString()
   title!: string;
 
@@ -23,4 +21,10 @@ export class CreateEventDto {
   @IsArray()
   @IsOptional()
   followers!: string[];
+}
+
+export class EventPaginationDto extends PaginationDto {
+  @IsOptional()
+  @IsString()
+  userId?: string;
 }

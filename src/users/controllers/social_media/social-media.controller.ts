@@ -3,8 +3,6 @@ import {
   Controller,
   Delete,
   Get,
-  HttpException,
-  HttpStatus,
   Inject,
   Param,
   ParseUUIDPipe,
@@ -12,7 +10,7 @@ import {
   Post,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { catchError, firstValueFrom } from 'rxjs';
+import { catchError } from 'rxjs';
 import { USERS_SERVICE } from '../../../config/services.js';
 import { CreateSMDto, UpdateSMDto } from '../../dto/index.js';
 import { handleRpcCustomError } from '../../../common/index.js';

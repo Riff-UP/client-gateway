@@ -14,6 +14,7 @@ interface EnvVars {
 
   SESSION_SECRET: string;
   RABBIT_URL: string;
+  JWT_SECRET: string;
 }
 
 const envSchema = joi
@@ -30,6 +31,7 @@ const envSchema = joi
 
     SESSION_SECRET: joi.string().required(),
     RABBIT_URL: joi.string().required(),
+    JWT_SECRET: joi.string().required(),
   })
   .unknown(true);
 
@@ -54,4 +56,5 @@ export const envs = {
 
   sessionSecret: envVars.SESSION_SECRET,
   rabbitUrl: envVars.RABBIT_URL,
+  jwtSecret: envVars.JWT_SECRET,
 };
