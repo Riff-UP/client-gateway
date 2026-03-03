@@ -20,7 +20,7 @@ export class EventsController {
   constructor(
     @Inject(CONTENT_SERVICE) private readonly eventService: ClientProxy,
     @Inject(USERS_SERVICE) private readonly usersService: ClientProxy,
-  ) { }
+  ) {}
 
   @Post()
   async create(@Body() createEventDto: CreateEventDto) {
@@ -48,7 +48,7 @@ export class EventsController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.eventService
-      .send('findOneEvent', {id})
+      .send('findOneEvent', { id })
       .pipe(catchError(handleRpcCustomError));
   }
 

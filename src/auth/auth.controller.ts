@@ -19,11 +19,11 @@ export class AuthController {
   constructor(
     @Inject(USERS_SERVICE) private readonly authClient: ClientProxy,
     @Inject(EVENTS_SERVICE) private readonly eventsClient: ClientProxy,
-  ) { }
+  ) {}
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  async googleAuth(@Req() req) { }
+  async googleAuth(@Req() req) {}
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
@@ -101,9 +101,7 @@ export class AuthController {
 
   @Post('login')
   async login(@Body() payload: { email: string; password: string }) {
-    const result = await firstValueFrom(
-      this.authClient.send('login', payload),
-    );
+    const result = await firstValueFrom(this.authClient.send('login', payload));
 
     // Emitir evento para que otros microservicios repliquen el usuario
     if (result && result.token && result.user) {

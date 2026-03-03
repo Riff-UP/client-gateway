@@ -19,7 +19,7 @@ export class EventAttendanceController {
   constructor(
     @Inject(CONTENT_SERVICE)
     private readonly eventAttendanceService: ClientProxy,
-  ) { }
+  ) {}
 
   @Post()
   create(@Body() createEventAttendanceDto: CreateEventAttendanceDto) {
@@ -38,7 +38,7 @@ export class EventAttendanceController {
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.eventAttendanceService
-      .send('findOneEventAttendance', {id})
+      .send('findOneEventAttendance', { id })
       .pipe(catchError(handleRpcCustomError));
   }
 
@@ -55,7 +55,7 @@ export class EventAttendanceController {
   @Delete(':id')
   remove(@Param('id') id: string) {
     return this.eventAttendanceService
-      .send('removeEventAttendance', {id})
+      .send('removeEventAttendance', { id })
       .pipe(catchError(handleRpcCustomError));
   }
 }

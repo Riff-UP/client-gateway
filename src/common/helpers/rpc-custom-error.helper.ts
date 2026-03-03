@@ -59,9 +59,20 @@ export const handleRpcCustomError = (error: any): never => {
   }
 
   // Fallback: Si el microservicio explota con un error desconocido (ej. base de datos caída)
-  logger.error(error);
+  // Log full error for debugging
+  logger.error('Unexpected RPC error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+  if (error && (error.message || error.stack)) {
+    logger.error(error.message || error.stack);
+  }
+
+  // Try to include microservice error message in HTTP response for easier debugging (safe for local/dev)
+  const detail = error?.message || error?.error || JSON.stringify(error);
   throw new HttpException(
-    'Internal Server Error from Microservice',
+    {
+      statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
+      message: 'Internal Server Error from Microservice',
+      detail,
+    },
     HttpStatus.INTERNAL_SERVER_ERROR,
   );
 };

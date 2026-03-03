@@ -18,7 +18,7 @@ import { catchError } from 'rxjs';
 export class EventReviewsController {
   constructor(
     @Inject(CONTENT_SERVICE) private readonly eventReviewsService: ClientProxy,
-  ) { }
+  ) {}
 
   @Post()
   create(@Body() createEventReviewDto: CreateEventReviewsDto) {

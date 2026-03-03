@@ -54,17 +54,17 @@ export class UsersController {
 
   @Delete(':id')
   remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.usersClient.send('deactivateUser', id).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.usersClient
+      .send('deactivateUser', id)
+      .pipe(catchError(handleRpcCustomError));
   }
 
   //testing
   @Delete(':id/hard')
   hardRemove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.usersClient.send('removeUser', id).pipe(
-      catchError(handleRpcCustomError)
-    )
+    return this.usersClient
+      .send('removeUser', id)
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Patch(':id/password')

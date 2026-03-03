@@ -14,6 +14,7 @@ interface EnvVars {
 
   SESSION_SECRET: string;
   RABBIT_URL: string;
+  REDIS_URL: string;
 }
 
 const envSchema = joi
@@ -30,6 +31,7 @@ const envSchema = joi
 
     SESSION_SECRET: joi.string().required(),
     RABBIT_URL: joi.string().required(),
+    REDIS_URL: joi.string().required(),
   })
   .unknown(true);
 
@@ -53,5 +55,12 @@ export const envs = {
   contentMsPort: envVars.CONTENT_MICROSERVICE_PORT,
 
   sessionSecret: envVars.SESSION_SECRET,
-  rabbitUrl: envVars.RABBIT_URL,
+  // Ensure a heartbeat is present on the rabbit URL to reduce unexpected
+  // connection closures due to short heartbeats/timeouts. If the user already
+  // included query params, append using '&', otherwise use '?'.
+  rabbitUrl:
+    envVars.RABBIT_URL.includes('?')
+      ? `${envVars.RABBIT_URL}&heartbeat=60`
+      : `${envVars.RABBIT_URL}?heartbeat=60`,
+  redisUrl: envVars.REDIS_URL,
 };

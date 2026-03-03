@@ -17,7 +17,7 @@ import { catchError } from 'rxjs';
 export class PostReactionsController {
   constructor(
     @Inject(CONTENT_SERVICE) private readonly postReactionsService: ClientProxy,
-  ) { }
+  ) {}
 
   @Post()
   create(@Body() createPostReactionsDto: CreatePostReactionsDto) {

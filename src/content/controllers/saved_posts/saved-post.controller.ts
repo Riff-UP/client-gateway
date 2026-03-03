@@ -17,7 +17,7 @@ import { catchError } from 'rxjs';
 export class SavedPostsController {
   constructor(
     @Inject(CONTENT_SERVICE) private readonly savedPostsService: ClientProxy,
-  ) { }
+  ) {}
 
   @Post()
   create(@Body() createSavedPostDto: CreateSavedPostDto) {

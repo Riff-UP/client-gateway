@@ -18,9 +18,31 @@ Devuelve directamente el objeto/array sin wrapper.
 
 Todas las respuestas vienen envueltas en:
 
+````markdown
+# Client Gateway — Endpoints Completos
+
+> Prefijo global: `/api`  
+> Comunicación interna: **TCP** (ClientProxy.send) + **RabbitMQ** (ClientProxy.emit)  
+> Las respuestas exitosas son **passthrough** del microservicio correspondiente.
+
+---
+
+## Formatos de Respuesta por Microservicio
+
+Cada microservicio envuelve sus respuestas de forma diferente. El gateway hace passthrough directo.
+
+### Users MS (TCP)
+
+Devuelve directamente el objeto/array sin wrapper.
+
+### Content MS (RabbitMQ)
+
+Todas las respuestas vienen envueltas en:
+
 ```json
 { "success": true, "data": { ... }, "message": "Operation successful" }
 ```
+````
 
 Con paginación:
 
@@ -212,13 +234,13 @@ Extiende `PartialType(CreateUserDto)` — todos los campos son opcionales.
 
 ## Publicaciones (`/api/posts`) → Content MS (RMQ)
 
-| Método   | Ruta         | MessagePattern | Payload enviado al MS                                         | Respuesta del MS                                     |
-| -------- | ------------ | -------------- | ------------------------------------------------------------- | ---------------------------------------------------- |
-| `POST`   | `/posts`     | `createPost`   | `{ sql_user_id, type, title, url?, description?, provider? }` | `{ success, data: Post, message }`                   |
-| `GET`    | `/posts`     | `findAllPosts` | `{ page?, limit? }` (query params)                            | `{ success, data: { data: Post[], meta }, message }` |
-| `GET`    | `/posts/:id` | `findOnePost`  | `id` (string)                                                 | `{ success, data: Post, message }`                   |
-| `PATCH`  | `/posts/:id` | `updatePost`   | `{ id, ...campos parciales }`                                 | `{ success, data: Post, message }`                   |
-| `DELETE` | `/posts/:id` | `removePost`   | `id` (string)                                                 | `{ success, data: Post, message }`                   |
+| Método   | Ruta         | MessagePattern | Payload enviado al MS                                             | Respuesta del MS                                     |
+| -------- | ------------ | -------------- | ----------------------------------------------------------------- | ---------------------------------------------------- |
+| `POST`   | `/posts`     | `createPost`   | `{ sql_user_id, type, title, content?, description?, provider? }` | `{ success, data: Post, message }`                   |
+| `GET`    | `/posts`     | `findAllPosts` | `{ page?, limit? }` (query params)                                | `{ success, data: { data: Post[], meta }, message }` |
+| `GET`    | `/posts/:id` | `findOnePost`  | `id` (string)                                                     | `{ success, data: Post, message }`                   |
+| `PATCH`  | `/posts/:id` | `updatePost`   | `{ id, ...campos parciales }`                                     | `{ success, data: Post, message }`                   |
+| `DELETE` | `/posts/:id` | `removePost`   | `id` (string)                                                     | `{ success, data: Post, message }`                   |
 
 > El MS soporta paginación con defaults (page=1, limit=20). El gateway envía los query params `page` y `limit` si se proporcionan.
 
@@ -411,3 +433,18 @@ Todas las discrepancias detectadas durante la validación cruzada con los MS han
 | 4   | **`updatePasswordReset` payload incompatible**   | Se agregó `PATCH /password-resets/reset` con `ResetPasswordDto` (`{ token, password }`).                                                        |
 | 5   | **PostReactions `type` sin validación**          | Se agregó `@IsIn(['like','love','fire','applause'])` al DTO.                                                                                    |
 | 6   | **EventAttendance `status` sin validación**      | Se agregó `@IsIn(['confirmed','pending','cancelled'])` al DTO.                                                                                  |
+
+---
+
+## Guía de pruebas (Postman)
+
+Se añadió una guía paso a paso para ejecutar el flujo E2E (registro → login → crear post) en Postman. Ver: [POSTMAN_FLOW.md](POSTMAN_FLOW.md)
+
+Notas:
+
+- Si `POST /posts` falla con `500` y la traza contiene `unable to get local issuer certificate`, revisa la imagen `content-ms` (instalar `ca-certificates` o usar `NODE_EXTRA_CA_CERTS`).
+- Si el `content-ms` falla con `Cannot find module 'undici'`, sincroniza `package-lock.json` y asegúrate de que `undici` está en `dependencies` antes de `npm ci` en la imagen.
+
+```
+
+```

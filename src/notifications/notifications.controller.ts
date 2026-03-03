@@ -20,7 +20,7 @@ export class NotificationsController {
   constructor(
     @Inject(NOTIFICATIONS_SERVICE)
     private readonly notificationsClient: ClientProxy,
-  ) { }
+  ) {}
 
   @Post()
   create(@Body() createNotificationDto: CreateNotificationDto) {

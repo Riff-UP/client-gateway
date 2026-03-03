@@ -3,10 +3,11 @@ import { UsersController } from '../../controllers/users/users.controller.js';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { USERS_SERVICE } from '../../../config/services.js';
 import { envs } from '../../../config/index.js';
+import { UsersClientService } from '../../services/users-client.service.js';
 
 @Module({
   controllers: [UsersController],
-  providers: [],
+  providers: [UsersClientService],
   imports: [
     ClientsModule.register([
       {

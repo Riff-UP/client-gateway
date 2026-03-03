@@ -9,7 +9,7 @@ import { catchError } from 'rxjs';
 export class UserFollowsController {
   constructor(
     @Inject(USERS_SERVICE) private readonly userFollowsClient: ClientProxy,
-  ) { }
+  ) {}
 
   // POST /user-follows
   @Post()

@@ -33,7 +33,7 @@ export class PasswordResetsController {
     @Inject(USERS_SERVICE) private readonly passwordResetsClient: ClientProxy,
     @Inject(NOTIFICATIONS_SERVICE)
     private readonly notificationsClient: ClientProxy,
-  ) { }
+  ) {}
 
   @Post('send')
   @HttpCode(HttpStatus.OK)

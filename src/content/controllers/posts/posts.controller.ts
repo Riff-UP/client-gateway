@@ -13,7 +13,8 @@ import { CreatePostDto, UpdatePostsDto } from '../../dto';
 import { CONTENT_SERVICE } from '../../../config/services.js';
 import { ClientProxy } from '@nestjs/microservices';
 import { handleRpcCustomError, PaginationDto } from '../../../common';
-import { catchError } from 'rxjs';
+import { catchError, firstValueFrom } from 'rxjs';
+import { Logger } from '@nestjs/common';
 
 @Controller('posts')
 export class PostsController {
@@ -22,10 +23,17 @@ export class PostsController {
   ) { }
 
   @Post()
-  create(@Body() createPostsDto: CreatePostDto) {
-    return this.contentService
-      .send('createPost', createPostsDto || {})
-      .pipe(catchError(handleRpcCustomError));
+  async create(@Body() createPostsDto: CreatePostDto) {
+    try {
+      const result = await firstValueFrom(
+        this.contentService.send('createPost', createPostsDto || {}),
+      );
+      return result;
+    } catch (err) {
+      const logger = new Logger('PostsController');
+      logger.error('Error calling content service createPost', err?.message || err, err?.stack);
+      throw err;
+    }
   }
 
   @Get()

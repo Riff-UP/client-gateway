@@ -20,6 +20,7 @@ services:
       - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
       - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
       - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL}
+      - REDIS_URL=${REDIS_URL}
     networks:
       - riff-network
 
@@ -33,6 +34,24 @@ services:
     ports:
       - '5675:5672'
       - '15675:15672'
+    networks:
+      - riff-network
+
+  central-redis:
+    image: redis:7-alpine
+    container_name: riff_central_redis
+    restart: always
+    environment:
+      # Optionally set a password with REDIS_PASSWORD in your .env
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    command:
+      [
+        '/bin/sh',
+        '-c',
+        'if [ -n "$REDIS_PASSWORD" ]; then redis-server --requirepass "$REDIS_PASSWORD"; else redis-server; fi',
+      ]
+    ports:
+      - '6379:6379'
     networks:
       - riff-network
 
