@@ -11,6 +11,7 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ClientProxy } from '@nestjs/microservices';
 import { USERS_SERVICE, EVENTS_SERVICE } from '../config/services.js';
+import { PublisherService } from '../common/publisher.service.js';
 import type { Request, Response } from 'express';
 import { firstValueFrom } from 'rxjs';
 
@@ -19,11 +20,12 @@ export class AuthController {
   constructor(
     @Inject(USERS_SERVICE) private readonly authClient: ClientProxy,
     @Inject(EVENTS_SERVICE) private readonly eventsClient: ClientProxy,
-  ) {}
+    private readonly publisher: PublisherService,
+  ) { }
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  async googleAuth(@Req() req) {}
+  async googleAuth(@Req() req) { }
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
@@ -41,8 +43,8 @@ export class AuthController {
         const token = await firstValueFrom(
           this.authClient.send('generateToken', existingUser),
         );
-        // Emitir evento para que otros microservicios lo consuman
-        this.eventsClient.emit('auth.tokenGenerated', {
+        // Emitir evento para que otros microservicios lo consuman (publicar al exchange)
+        this.publisher.publish('auth.tokenGenerated', {
           user: existingUser,
           token,
         });
@@ -64,8 +66,8 @@ export class AuthController {
         this.authClient.send('generateToken', newUser),
       );
 
-      // Emitir evento para que otros microservicios lo consuman
-      this.eventsClient.emit('auth.tokenGenerated', {
+      // Emitir evento para que otros microservicios lo consuman (publicar al exchange)
+      this.publisher.publish('auth.tokenGenerated', {
         user: newUser,
         token,
       });
@@ -105,7 +107,7 @@ export class AuthController {
 
     // Emitir evento para que otros microservicios repliquen el usuario
     if (result && result.token && result.user) {
-      this.eventsClient.emit('auth.tokenGenerated', {
+      this.publisher.publish('auth.tokenGenerated', {
         user: result.user,
         token: result.token,
       });

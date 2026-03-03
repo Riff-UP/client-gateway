@@ -33,7 +33,7 @@ export class PasswordResetsController {
     @Inject(USERS_SERVICE) private readonly passwordResetsClient: ClientProxy,
     @Inject(NOTIFICATIONS_SERVICE)
     private readonly notificationsClient: ClientProxy,
-  ) {}
+  ) { }
 
   @Post('send')
   @HttpCode(HttpStatus.OK)
@@ -44,17 +44,6 @@ export class PasswordResetsController {
         .send('sendPasswordReset', mailDto)
         .pipe(catchError(handleRpcCustomError)),
     )) as ResetResult;
-
-    // Emitir evento para que Notifications-MS envíe el email
-    if (result) {
-      this.notificationsClient.emit('send.resetPassword', {
-        mail: mailDto.mail,
-        userId: result.userId ?? result.id,
-        userName: result.userName ?? result.name,
-        token: result.token,
-      });
-    }
-
     return result;
   }
 

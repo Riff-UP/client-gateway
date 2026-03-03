@@ -5,6 +5,7 @@ import { AuthController } from './auth.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { USERS_SERVICE, EVENTS_SERVICE } from '../config/services.js';
 import { envs } from '../config/index.js';
+import { PublisherService } from '../common/publisher.service.js';
 
 @Module({
   imports: [
@@ -32,6 +33,6 @@ import { envs } from '../config/index.js';
     ]),
   ],
   controllers: [AuthController],
-  providers: [GoogleStrategy],
+  providers: [GoogleStrategy, PublisherService],
 })
-export class AuthModule {}
+export class AuthModule { }
