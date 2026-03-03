@@ -1,0 +1,25 @@
+version: '3.8'
+
+services:
+  rabbit-setup:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    image: client-gateway:rabbit-setup
+    container_name: riff_rabbit_setup
+    working_dir: /app
+    command: ["node", "scripts/rabbit-setup.js"]
+    environment:
+      # RABBIT_URL apunta al servicio central-rabbit en la red riff-network
+      - RABBIT_URL=${RABBIT_URL:-amqp://guest:guest@central-rabbit:5672/%2f}
+      # Configuración de reintentos (opcional, valores por defecto ya están en el script)
+      - RABBIT_SETUP_MAX_ATTEMPTS=${RABBIT_SETUP_MAX_ATTEMPTS:-8}
+      - RABBIT_SETUP_INITIAL_DELAY=${RABBIT_SETUP_INITIAL_DELAY:-2000}
+    restart: "no"
+    networks:
+      - riff-network
+
+networks:
+  riff-network:
+    external: true
+
