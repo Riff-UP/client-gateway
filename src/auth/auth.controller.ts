@@ -78,24 +78,40 @@ export class AuthController {
 
   @Get('logout')
   logout(@Req() req: Request, @Res() res: Response) {
+    console.log('[Logout] Iniciando logout...');
+
+    // Si no hay usuario en sesión, responder inmediatamente
+    if (!req.user && !req.session) {
+      console.log('[Logout] No hay sesión activa');
+      return res.json({ message: 'No hay sesión activa' });
+    }
+
     req.logout((err) => {
       if (err) {
+        console.error('[Logout] Error en req.logout:', err);
         return res
           .status(500)
           .json({ message: 'Error al cerrar sesión', error: err });
       }
 
+      console.log('[Logout] req.logout() completado');
+
       if (req.session) {
+        console.log('[Logout] Destruyendo sesión...');
         req.session.destroy((sessionErr) => {
           if (sessionErr) {
+            console.error('[Logout] Error al destruir sesión:', sessionErr);
             return res
               .status(500)
               .json({ message: 'Error al destruir sesión', error: sessionErr });
           }
+          console.log('[Logout] Sesión destruida exitosamente');
           res.clearCookie('connect.sid');
           return res.json({ message: 'Sesión cerrada exitosamente' });
         });
       } else {
+        console.log('[Logout] No hay sesión para destruir');
+        res.clearCookie('connect.sid');
         return res.json({ message: 'Sesión cerrada exitosamente' });
       }
     });

@@ -19,31 +19,51 @@ async function bootstrap() {
 
   // Configurar sesiones
   // Redis client for session store
-  const redisClient = createRedisClient({ url: envs.redisUrl });
+  const redisClient = createRedisClient({
+    url: envs.redisUrl,
+    socket: {
+      connectTimeout: 5000, // 5 seconds timeout
+      reconnectStrategy: (retries) => {
+        if (retries > 3) {
+          console.error('Redis reconnection failed after 3 attempts');
+          return false; // Stop reconnecting
+        }
+        return Math.min(retries * 100, 3000);
+      }
+    }
+  });
+
+  let storeInstance: any = undefined;
+
   try {
     await redisClient.connect();
+    logger.log('Redis connected successfully for session store');
+
+    // Use the RedisStore class exported by connect-redis
+    const RedisStoreClass = ConnectRedis;
+    storeInstance = new RedisStoreClass({
+      client: redisClient as any,
+      ttl: 86400, // 24 horas en segundos
+    });
   } catch (err) {
     // If Redis is not available, app will still run with MemoryStore (not recommended)
     // In production ensure REDIS_URL is reachable.
-    // eslint-disable-next-line no-console
-    console.warn(
-      'Could not connect to Redis for session store:',
-      err?.message || err,
+    logger.warn(
+      '⚠️  Could not connect to Redis for session store. Using MemoryStore (not recommended for production)',
     );
+    logger.warn(`Redis error: ${err?.message || err}`);
   }
-
-  // Use the RedisStore class exported by connect-redis
-  const RedisStoreClass = ConnectRedis;
-  const storeInstance = redisClient ? new RedisStoreClass({ client: redisClient as any }) : undefined;
 
   app.use(
     session({
-      store: storeInstance as any,
+      store: storeInstance,
       secret: envs.sessionSecret,
       resave: false,
       saveUninitialized: false,
       cookie: {
         maxAge: 60000 * 60 * 24, // 24 horas
+        httpOnly: true,
+        secure: false, // Set to true in production with HTTPS
       },
     }),
   );
