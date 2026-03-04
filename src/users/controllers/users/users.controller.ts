@@ -35,6 +35,7 @@ export class UsersController {
       .pipe(catchError(handleRpcCustomError));
   }
 
+
   @Get(':id')
   findOne(@Param('id', ParseUUIDPipe) id: string) {
     return this.usersClient

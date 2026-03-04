@@ -38,11 +38,14 @@ export class PublisherService implements OnModuleInit, OnModuleDestroy {
       return false;
     }
     try {
+      // NestJS RMQ Transport espera el formato { pattern, data }
+      // Si se publica JSON plano, el MS recibe pattern: undefined
+      const message = { pattern: routingKey, data: payload };
       const ok = this.ch.publish(
         this.exchange,
         routingKey,
-        Buffer.from(JSON.stringify(payload)),
-        { persistent: true },
+        Buffer.from(JSON.stringify(message)),
+        { persistent: true, contentType: 'application/json' },
       );
       this.logger.debug(`Published ${routingKey}`);
       return ok;

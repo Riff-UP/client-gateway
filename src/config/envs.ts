@@ -13,8 +13,15 @@ interface EnvVars {
   CONTENT_MICROSERVICE_PORT: number;
 
   SESSION_SECRET: string;
+  JWT_SECRET: string;
   RABBIT_URL: string;
   REDIS_URL: string;
+
+  R2_ENDPOINT: string;
+  R2_ACCESS_KEY: string;
+  R2_SECRET_KEY: string;
+  R2_BUCKET: string;
+  R2_PUBLIC_URL: string;
 }
 
 const envSchema = joi
@@ -30,8 +37,15 @@ const envSchema = joi
     CONTENT_MICROSERVICE_PORT: joi.number().required(),
 
     SESSION_SECRET: joi.string().required(),
+    JWT_SECRET: joi.string().default('riff-2026-secret'),
     RABBIT_URL: joi.string().required(),
     REDIS_URL: joi.string().required(),
+
+    R2_ENDPOINT: joi.string().required(),
+    R2_ACCESS_KEY: joi.string().required(),
+    R2_SECRET_KEY: joi.string().required(),
+    R2_BUCKET: joi.string().required(),
+    R2_PUBLIC_URL: joi.string().required(),
   })
   .unknown(true);
 
@@ -55,6 +69,7 @@ export const envs = {
   contentMsPort: envVars.CONTENT_MICROSERVICE_PORT,
 
   sessionSecret: envVars.SESSION_SECRET,
+  jwtSecret: envVars.JWT_SECRET,
   // Ensure a heartbeat is present on the rabbit URL to reduce unexpected
   // connection closures due to short heartbeats/timeouts. If the user already
   // included query params, append using '&', otherwise use '?'.
@@ -63,4 +78,10 @@ export const envs = {
       ? `${envVars.RABBIT_URL}&heartbeat=60`
       : `${envVars.RABBIT_URL}?heartbeat=60`,
   redisUrl: envVars.REDIS_URL,
+
+  r2Endpoint: envVars.R2_ENDPOINT,
+  r2AccessKey: envVars.R2_ACCESS_KEY,
+  r2SecretKey: envVars.R2_SECRET_KEY,
+  r2Bucket: envVars.R2_BUCKET,
+  r2PublicUrl: envVars.R2_PUBLIC_URL,
 };

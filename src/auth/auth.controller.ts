@@ -43,12 +43,16 @@ export class AuthController {
         const token = await firstValueFrom(
           this.authClient.send('generateToken', existingUser),
         );
-        // Emitir evento para que otros microservicios lo consuman (publicar al exchange)
         this.publisher.publish('auth.tokenGenerated', {
-          user: existingUser,
+          userId: existingUser.id ?? existingUser.userId,
           token,
+          email: existingUser.email,
+          name: existingUser.name,
+          role: existingUser.role,
+          googleId: existingUser.googleId,
+          picture: existingUser.picture,
         });
-        return res.redirect(`http://localhost:3000/home?token=${token}`);
+        return res.redirect(`http://localhost:3000/?token=${token}`);
       }
     } catch (error) {
       // Si el usuario no existe crear cuenta nueva
@@ -68,11 +72,16 @@ export class AuthController {
 
       // Emitir evento para que otros microservicios lo consuman (publicar al exchange)
       this.publisher.publish('auth.tokenGenerated', {
-        user: newUser,
+        userId: newUser.id ?? newUser.userId,
         token,
+        email: newUser.email,
+        name: newUser.name,
+        role: newUser.role,
+        googleId: newUser.googleId,
+        picture: newUser.picture,
       });
 
-      return res.redirect(`http://localhost:3000/home?token=${token}`);
+      return res.redirect(`http://localhost:3000/?token=${token}`);
     }
   }
 
@@ -118,14 +127,34 @@ export class AuthController {
   }
 
   @Post('login')
-  async login(@Body() payload: { email: string; password: string }) {
+  async login(
+    @Body() payload: { email: string; password: string },
+    @Req() req: Request,
+  ) {
     const result = await firstValueFrom(this.authClient.send('login', payload));
 
-    // Emitir evento para que otros microservicios repliquen el usuario
     if (result && result.token && result.user) {
+      // El content-ms y otros MSs esperan el evento con esta estructura PLANA:
+      // { userId, token, email, name, role, ... }
+      // NO anidada como { user: { id }, token }
       this.publisher.publish('auth.tokenGenerated', {
-        user: result.user,
+        userId: result.user.id ?? result.user.userId,
         token: result.token,
+        email: result.user.email,
+        name: result.user.name,
+        role: result.user.role,
+        googleId: result.user.googleId,
+        picture: result.user.picture,
+      });
+
+      // Guardar usuario en sesión de Passport
+      await new Promise<void>((resolve) => {
+        req.logIn(result.user, (err) => {
+          if (err) {
+            this.publisher['logger']?.warn?.('req.logIn failed: ' + String(err));
+          }
+          resolve();
+        });
       });
     }
 

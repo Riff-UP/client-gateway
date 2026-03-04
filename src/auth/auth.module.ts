@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { PassportModule } from '@nestjs/passport';
+import { JwtModule } from '@nestjs/jwt';
 import { GoogleStrategy } from './strategies/google.strategy';
+import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthController } from './auth.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { USERS_SERVICE, EVENTS_SERVICE } from '../config/services.js';
@@ -10,6 +12,10 @@ import { PublisherService } from '../common/publisher.service.js';
 @Module({
   imports: [
     PassportModule,
+    JwtModule.register({
+      secret: envs.jwtSecret,
+      signOptions: { expiresIn: '24h' },
+    }),
     ClientsModule.register([
       {
         name: USERS_SERVICE,
@@ -33,6 +39,7 @@ import { PublisherService } from '../common/publisher.service.js';
     ]),
   ],
   controllers: [AuthController],
-  providers: [GoogleStrategy, PublisherService],
+  providers: [GoogleStrategy, JwtStrategy, PublisherService],
+  exports: [JwtStrategy, PassportModule],
 })
-export class AuthModule { }
+export class AuthModule {}

@@ -15,6 +15,22 @@ async function bootstrap() {
 
   const app = await NestFactory.create(AppModule);
 
+  // Configurar CORS con más opciones
+  app.enableCors({
+    origin: ['http://localhost:3000', 'http://localhost:4000'], // Frontend y backend
+    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
+    credentials: true,
+    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    exposedHeaders: ['Authorization'],
+    maxAge: 3600, // Cache preflight por 1 hora
+  });
+
+  // Middleware para logging de peticiones (debugging)
+  app.use((req, res, next) => {
+    logger.log(`${req.method} ${req.url} - Origin: ${req.headers.origin || 'none'}`);
+    next();
+  });
+
   app.setGlobalPrefix('api');
 
   // Configurar sesiones
