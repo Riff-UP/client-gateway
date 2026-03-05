@@ -64,7 +64,7 @@ export class PostsController {
 
     // ── Construir payload para content-ms ─────────────────────────────────
     const payload = {
-      sql_user_id: user?.id as string,
+      userId: user?.id as string, // ← Solo userId (UUID de MongoDB)
       type: (type ?? 'image') as 'image' | 'audio',
       title,
       description,

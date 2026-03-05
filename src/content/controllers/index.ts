@@ -4,3 +4,4 @@ export * from './events/events.controller';
 export * from './post_reactions/post-reactions.controller';
 export * from './posts/posts.controller';
 export * from './saved_posts/saved-post.controller';
+export * from './saved_events/saved-events.controller';

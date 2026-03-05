@@ -7,3 +7,4 @@ export * from './event_reviews/create-event-reviews.dto';
 export * from './event_reviews/update-event-reviews.dto';
 export * from './post_reactions/create-post-reactions.dto';
 export * from './saved_posts/create-saved-post.dto';
+export * from './saved_events/create-saved-event.dto';

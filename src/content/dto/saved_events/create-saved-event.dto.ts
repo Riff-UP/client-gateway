@@ -1,12 +1,15 @@
 import { IsMongoId, IsNotEmpty, IsString } from 'class-validator';
 
-export class CreateSavedPostDto {
+export class CreateSavedEventDto {
   @IsString()
   @IsNotEmpty()
   @IsMongoId()
-  postId!: string;
+  eventId!: string;
 
   @IsString()
   @IsNotEmpty()
   userId!: string;
 }
+
+
+

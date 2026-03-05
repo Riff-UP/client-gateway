@@ -6,6 +6,7 @@ import {
   Inject,
   Param,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { CONTENT_SERVICE } from '../../../config/services.js';
@@ -27,9 +28,9 @@ export class SavedPostsController {
   }
 
   @Get()
-  findAll() {
+  findAll(@Query('userId') userId?: string) {
     return this.savedPostsService
-      .send('findAllSavedPosts', {})
+      .send('findAllSavedPosts', userId ? { userId } : {})
       .pipe(catchError(handleRpcCustomError));
   }
 

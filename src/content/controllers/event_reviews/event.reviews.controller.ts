@@ -7,12 +7,15 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { CONTENT_SERVICE } from '../../../config/services';
 import { CreateEventReviewsDto, UpdateEventReviewsDto } from '../../dto';
 import { handleRpcCustomError } from '../../../common';
 import { catchError } from 'rxjs';
+import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
+import { GetUser } from '../../../auth/decorators/get-user.decorator';
 
 @Controller('events/reviews')
 export class EventReviewsController {
@@ -21,9 +24,14 @@ export class EventReviewsController {
   ) {}
 
   @Post()
-  create(@Body() createEventReviewDto: CreateEventReviewsDto) {
+  @UseGuards(JwtAuthGuard)
+  create(@GetUser() user: any, @Body() createEventReviewDto: CreateEventReviewsDto) {
+    const payload = {
+      ...createEventReviewDto,
+      userId: user.id, // ← Solo userId (UUID de MongoDB)
+    };
     return this.eventReviewsService
-      .send('createEventReview', createEventReviewDto || {})
+      .send('createEventReview', payload)
       .pipe(catchError(handleRpcCustomError));
   }
 
@@ -59,9 +67,10 @@ export class EventReviewsController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  @UseGuards(JwtAuthGuard)
+  remove(@GetUser() user: any, @Param('id') id: string) {
     return this.eventReviewsService
-      .send('removeEventReview', { id })
+      .send('removeEventReview', { id, userId: user.id })
       .pipe(catchError(handleRpcCustomError));
   }
 }

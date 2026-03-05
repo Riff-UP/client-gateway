@@ -7,12 +7,15 @@ import {
   Param,
   Patch,
   Post,
+  UseGuards,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { CONTENT_SERVICE } from '../../../config/services.js';
 import { CreateEventAttendanceDto } from '../../dto';
 import { catchError } from 'rxjs';
 import { handleRpcCustomError } from '../../../common/index.js';
+import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
+import { GetUser } from '../../../auth/decorators/get-user.decorator';
 
 @Controller('events/attendance')
 export class EventAttendanceController {
@@ -22,9 +25,14 @@ export class EventAttendanceController {
   ) {}
 
   @Post()
-  create(@Body() createEventAttendanceDto: CreateEventAttendanceDto) {
+  @UseGuards(JwtAuthGuard)
+  create(@GetUser() user: any, @Body() createEventAttendanceDto: CreateEventAttendanceDto) {
+    const payload = {
+      ...createEventAttendanceDto,
+      userId: user.id, // ← Solo userId (UUID de MongoDB)
+    };
     return this.eventAttendanceService
-      .send('createEventAttendance', createEventAttendanceDto || {})
+      .send('createEventAttendance', payload)
       .pipe(catchError(handleRpcCustomError));
   }
 
@@ -53,9 +61,10 @@ export class EventAttendanceController {
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
+  @UseGuards(JwtAuthGuard)
+  remove(@GetUser() user: any, @Param('id') id: string) {
     return this.eventAttendanceService
-      .send('removeEventAttendance', { id })
+      .send('removeEventAttendance', { id, userId: user.id })
       .pipe(catchError(handleRpcCustomError));
   }
 }
