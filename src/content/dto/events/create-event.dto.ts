@@ -2,15 +2,16 @@ import { IsArray, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateEventDto {
   @IsString()
-  @IsNotEmpty()
-  sql_user_id!: string;
+  @IsOptional() // ← Opcional porque el gateway lo agrega desde el JWT
+  sql_user_id?: string;
 
   @IsString()
+  @IsNotEmpty()
   title!: string;
 
   @IsString()
   @IsOptional()
-  description!: string;
+  description?: string;
 
   @IsString()
   @IsNotEmpty()
@@ -22,5 +23,5 @@ export class CreateEventDto {
 
   @IsArray()
   @IsOptional()
-  followers!: string[];
+  followers?: string[];
 }

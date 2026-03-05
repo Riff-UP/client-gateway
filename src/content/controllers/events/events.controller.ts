@@ -9,6 +9,7 @@ import {
   Inject,
   Query,
   UseGuards,
+  BadRequestException,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { CONTENT_SERVICE, USERS_SERVICE } from '../../../config/services';
@@ -28,14 +29,37 @@ export class EventsController {
   @Post()
   @UseGuards(JwtAuthGuard)
   async create(@GetUser() user: any, @Body() createEventDto: CreateEventDto) {
+    console.log('👤 User from JWT Guard:', JSON.stringify(user));
+
+    // Validar que el usuario existe
+    if (!user || !user.id) {
+      console.error('❌ user.id is undefined! User object:', user);
+      throw new BadRequestException(
+        'Usuario no autenticado. El token JWT no contiene un userId válido.',
+      );
+    }
+
     // El userId viene del JWT, no del body
     const userId = user.id;
+    console.log('✅ userId extraído del JWT:', userId);
 
     const followers = await firstValueFrom(
       this.usersService.send('findFollowers', {
         userId: userId,
       }),
-    );
+    ).catch((error) => {
+      console.warn(
+        '⚠️ No se pudieron obtener followers, continuando sin ellos. Error:',
+        error.message,
+      );
+      return [];
+    });
+
+    console.log('📤 Enviando al microservicio:', {
+      ...createEventDto,
+      sql_user_id: userId,
+      followers,
+    });
 
     return this.eventService
       .send('createEvent', {
