@@ -20,6 +20,8 @@ COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/scripts ./scripts
 
+RUN chmod +x /app/scripts/entrypoint.sh
+
 EXPOSE 3000
 
-CMD ["node", "dist/main"]
+CMD ["/app/scripts/entrypoint.sh"]
