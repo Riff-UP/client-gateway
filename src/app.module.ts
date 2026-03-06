@@ -3,7 +3,11 @@ import { ConfigModule } from '@nestjs/config';
 import { UsersModule } from './users/modules/users/users.module';
 import { AuthModule } from './auth/auth.module';
 import { NotificationsModule } from './notifications/notifications.module';
-import { PostsModule, SavedPostsModule } from './content/modules';
+import {
+  PostsModule,
+  SavedPostsModule,
+  SavedEventsModule,
+} from './content/modules';
 import { EventsModule } from './content/modules';
 import { EventAttendanceModule } from './content/modules';
 import { EventReviewsModule } from './content/modules';
@@ -20,16 +24,17 @@ import { UserStatsModule } from './users/modules/user_stats/user-stats.module';
     UsersModule,
     AuthModule,
     NotificationsModule,
-    EventsModule,
-    EventAttendanceModule,
     EventReviewsModule,
+    EventAttendanceModule,
+    EventsModule,
     PostReactionsModule,
     SocialMediaModule,
     SavedPostsModule,
+    SavedEventsModule,
     PostsModule,
     PasswordResetsModule,
     UserFollowsModule,
-    UserStatsModule
+    UserStatsModule,
   ],
 })
 export class AppModule {}

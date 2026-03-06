@@ -3,16 +3,22 @@ import {
   Controller,
   Delete,
   Get,
+  HttpException,
+  HttpStatus,
   Inject,
   Param,
+  ParseUUIDPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { USERS_SERVICE } from 'src/config/services';
-import { CreateSMDto } from 'src/users/dto';
+import { catchError, firstValueFrom } from 'rxjs';
+import { USERS_SERVICE } from '../../../config/services.js';
+import { CreateSMDto, UpdateSMDto } from '../../dto/index.js';
+import { handleRpcCustomError } from '../../../common/index.js';
 
-@Controller('sm')
+@Controller('social-media')
 export class SocialMediaController {
   constructor(
     @Inject(USERS_SERVICE) private readonly socialMediaClient: ClientProxy,
@@ -20,29 +26,54 @@ export class SocialMediaController {
 
   @Post()
   create(@Body() createSMDto: CreateSMDto) {
-    return this.socialMediaClient.send('createSocialMedia', createSMDto || {});
+    return this.socialMediaClient
+      .send('createSocialMedia', createSMDto || {})
+      .pipe(catchError(handleRpcCustomError));
   }
 
+  // GET /social-media?userId=<uuid>  → redes sociales de un usuario (query param)
+  // GET /social-media                → todas las redes sociales
   @Get()
-  findAll() {
-    return this.socialMediaClient.send('findAllSocialMedia', {});
+  findAll(@Query('userId') userId?: string) {
+    if (userId) {
+      return this.socialMediaClient
+        .send('findSocialMediaByUserId', { userId })
+        .pipe(catchError(handleRpcCustomError));
+    }
+    return this.socialMediaClient
+      .send('findAllSocialMedia', {})
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  // GET /social-media/user/:userId  → redes sociales de un usuario (path param)
+  @Get('user/:userId')
+  findByUserId(@Param('userId', ParseUUIDPipe) userId: string) {
+    return this.socialMediaClient
+      .send('findSocialMediaByUserId', { userId })
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Get(':id')
-  findOne(@Param('id') id: string) {
-    return this.socialMediaClient.send('findOneSocialMedia', id);
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.socialMediaClient
+      .send('findOneSocialMedia', id)
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Patch(':id')
-  update(@Param('id') id: string, @Body() CreateSMDto: CreateSMDto) {
-    return this.socialMediaClient.send('updateSocialMedia', {
-      id,
-      ...CreateSMDto,
-    });
+  update(
+    @Param('id', ParseUUIDPipe) id: string,
+    @Body() updateSMDto: UpdateSMDto,
+  ) {
+    return this.socialMediaClient
+      .send('updateSocialMedia', { id, ...updateSMDto })
+      .pipe(catchError(handleRpcCustomError));
   }
 
   @Delete(':id')
-  remove(@Param('id') id: string) {
-    return this.socialMediaClient.send('removeSocialMedia', id);
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.socialMediaClient
+      .send('removeSocialMedia', id)
+      .pipe(catchError(handleRpcCustomError));
   }
 }

@@ -1,0 +1,26 @@
++# Example Dockerfile for content-ms using Alpine base (Node 20)
+# Use this as the Dockerfile for the content-ms repository. It installs
+# system CA certificates so Node can validate public TLS certs (Cloudflare R2 etc.).
+
+FROM node:20-alpine
+
+# Install runtime CA certificates and other minimal deps
+RUN apk add --no-cache ca-certificates bash && update-ca-certificates
+
+# Create app directory
+WORKDIR /app
+
+# Copy package files and install production deps
+COPY package*.json ./
+RUN npm ci --only=production
+
+# Copy source and build (if build step required)
+COPY . .
+RUN npm run build
+
+# Use a non-root user if you prefer (optional):
+# RUN addgroup -S app && adduser -S app -G app
+# USER app
+
+EXPOSE 3004
+CMD ["node", "dist/main.js"]

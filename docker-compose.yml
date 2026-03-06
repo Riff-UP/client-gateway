@@ -1,0 +1,66 @@
+services:
+  client-gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: riff_client_gateway
+    restart: always
+    ports:
+      - ${PORT:-3000}:${PORT:-3000}
+    environment:
+      - PORT=${PORT:-3000}
+      - USERS_MICROSERVICE_HOST=${USERS_MICROSERVICE_HOST}
+      - USERS_MICROSERVICE_PORT=${USERS_MICROSERVICE_PORT}
+      - NOTIFICATIONS_MICROSERVICE_HOST=${NOTIFICATIONS_MICROSERVICE_HOST}
+      - NOTIFICATIONS_MICROSERVICE_PORT=${NOTIFICATIONS_MICROSERVICE_PORT}
+      - CONTENT_MICROSERVICE_HOST=${CONTENT_MICROSERVICE_HOST}
+      - CONTENT_MICROSERVICE_PORT=${CONTENT_MICROSERVICE_PORT}
+      - SESSION_SECRET=${SESSION_SECRET}
+      - JWT_SECRET=${JWT_SECRET}
+      - RABBIT_URL=${RABBIT_URL}
+      - GOOGLE_CLIENT_ID=${GOOGLE_CLIENT_ID}
+      - GOOGLE_CLIENT_SECRET=${GOOGLE_CLIENT_SECRET}
+      - GOOGLE_CALLBACK_URL=${GOOGLE_CALLBACK_URL}
+      - REDIS_URL=${REDIS_URL}
+      - R2_ENDPOINT=${R2_ENDPOINT}
+      - R2_ACCESS_KEY=${R2_ACCESS_KEY}
+      - R2_SECRET_KEY=${R2_SECRET_KEY}
+      - R2_BUCKET=${R2_BUCKET}
+      - R2_PUBLIC_URL=${R2_PUBLIC_URL}
+    networks:
+      - riff-network
+
+  central-rabbit:
+    image: rabbitmq:3.12-management-alpine
+    container_name: riff_central_rabbit
+    restart: always
+    environment:
+      RABBITMQ_DEFAULT_USER: guest
+      RABBITMQ_DEFAULT_PASS: guest
+    ports:
+      - '5675:5672'
+      - '15675:15672'
+    networks:
+      - riff-network
+
+  central-redis:
+    image: redis:7-alpine
+    container_name: riff_central_redis
+    restart: always
+    environment:
+      # Optionally set a password with REDIS_PASSWORD in your .env
+      - REDIS_PASSWORD=${REDIS_PASSWORD:-}
+    command:
+      [
+        '/bin/sh',
+        '-c',
+        'if [ -n "$REDIS_PASSWORD" ]; then redis-server --requirepass "$REDIS_PASSWORD"; else redis-server; fi',
+      ]
+    ports:
+      - '6379:6379'
+    networks:
+      - riff-network
+
+networks:
+  riff-network:
+    external: true

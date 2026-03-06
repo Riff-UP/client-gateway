@@ -1,0 +1,2 @@
+# Ignore private CA bundles
+custom-ca.pem

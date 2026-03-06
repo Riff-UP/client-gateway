@@ -1,35 +1,139 @@
-import { Controller, Get, Post, Body, Patch, Param, Delete, Inject } from '@nestjs/common';
+import {
+  Controller,
+  Get,
+  Post,
+  Body,
+  Patch,
+  Param,
+  Delete,
+  Inject,
+  Query,
+  UseGuards,
+  BadRequestException,
+} from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
-import { CONTENT_SERVICE } from 'src/config/services';
-import { CreateEventDto } from '../../dto';
+import { CONTENT_SERVICE, USERS_SERVICE } from '../../../config/services';
+import { CreateEventDto, UpdateEventDto } from '../../dto';
+import { catchError, firstValueFrom } from 'rxjs';
+import { handleRpcCustomError, PaginationDto } from '../../../common/index';
+import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
+import { GetUser } from '../../../auth/decorators/get-user.decorator';
 
 @Controller('events')
-    export class EventsController {
-        constructor(
-            @Inject(CONTENT_SERVICE) private readonly eventService: ClientProxy
-        ){}
-        @Post()
-        create(@Body() createEventDto: CreateEventDto){
-            return this.eventService.send('createEvent', createEventDto || {});
-        }
+export class EventsController {
+  constructor(
+    @Inject(CONTENT_SERVICE) private readonly eventService: ClientProxy,
+    @Inject(USERS_SERVICE) private readonly usersService: ClientProxy,
+  ) {}
 
-        @Get()
-        findAll(){
-            return this.eventService.send('findAllEvents', {});
-        }
-        
-        @Get(':id')
-        findOne(@Param('id') id: string){
-            return this.eventService.send('findOneEvent', id);
-        }
+  @Post()
+  @UseGuards(JwtAuthGuard)
+  async create(@GetUser() user: any, @Body() createEventDto: CreateEventDto) {
+    console.log('👤 User from JWT Guard:', JSON.stringify(user));
 
-        @Patch(':id')
-        update(@Param('id') id: string, @Body() updateEventDto: CreateEventDto){
-            return this.eventService.send('updateEvent', {id, ...updateEventDto});
-        }
+    // Validar que el usuario existe
+    if (!user || !user.id) {
+      console.error('❌ user.id is undefined! User object:', user);
+      throw new BadRequestException(
+        'Usuario no autenticado. El token JWT no contiene un userId válido.',
+      );
+    }
 
-        @Delete(':id')
-        remove(@Param('id') id: string){
-            return this.eventService.send('removeEvent', id);
-        }
+    // El userId viene del JWT, no del body
+    const userId = user.id;
+    console.log('✅ userId extraído del JWT:', userId);
+
+    const followers = await firstValueFrom(
+      this.usersService.send('findFollowers', {
+        userId: userId,
+      }),
+    ).catch((error) => {
+      console.warn(
+        '⚠️ No se pudieron obtener followers, continuando sin ellos. Error:',
+        error.message,
+      );
+      return [];
+    });
+
+    console.log('📤 Enviando al microservicio:', {
+      ...createEventDto,
+      sql_user_id: userId,
+      followers,
+    });
+
+    return this.eventService
+      .send('createEvent', {
+        ...createEventDto,
+        sql_user_id: userId, // ← Añadir el userId del JWT
+        followers,
+      })
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  @Get()
+  findAll(
+    @Query() paginationDto: PaginationDto,
+    @Query('userId') userId?: string,
+    @Query('organizerId') organizerId?: string,
+  ) {
+    if (organizerId) {
+      return this.eventService
+        .send('findEventsByOrganizer', { organizerId })
+        .pipe(catchError(handleRpcCustomError));
+    }
+
+    const payload = userId
+      ? { ...paginationDto, userId }
+      : { ...paginationDto };
+
+    return this.eventService
+      .send('findAllEvents', payload)
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.eventService
+      .send('findOneEvent', { id })
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  @Patch(':id')
+  @UseGuards(JwtAuthGuard)
+  async update(
+    @GetUser() user: any,
+    @Param('id') id: string,
+    @Body() updateEventDto: UpdateEventDto,
+  ) {
+    const userId = user.id;
+
+    const followers = await firstValueFrom(
+      this.usersService.send('findFollowers', {
+        userId: userId,
+      }),
+    ).catch(() => []);
+
+    return this.eventService
+      .send('updateEvent', {
+        id,
+        ...updateEventDto,
+        userId: userId, // ← Solo userId
+        followers,
+      })
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard)
+  async remove(@GetUser() user: any, @Param('id') id: string) {
+    const userId = user.id;
+
+    const followers = await firstValueFrom(
+      this.usersService.send('findFollowers', { userId: userId }),
+    ).catch(() => []);
+
+    return this.eventService
+      .send('removeEvent', { id, followers, userId })
+      .pipe(catchError(handleRpcCustomError));
+  }
 }

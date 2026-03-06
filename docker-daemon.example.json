@@ -1,0 +1,6 @@
+{
+  // Example Docker daemon config (Windows)
+  // Save to `C:\ProgramData\Docker\config\daemon.json` (requires admin)
+  // Then restart Docker Desktop.
+  "dns": ["8.8.8.8", "1.1.1.1"]
+}

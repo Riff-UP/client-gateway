@@ -1,7 +1,7 @@
 import { Module } from '@nestjs/common';
 import { NotificationsController } from './notifications.controller';
 import { ClientsModule, Transport } from '@nestjs/microservices';
-import { NOTIFICATIONS_SERVICE } from 'src/config/services';
+import { NOTIFICATIONS_SERVICE } from '../config/services.js';
 import { envs } from '../config/index.js';
 
 @Module({
@@ -11,13 +11,16 @@ import { envs } from '../config/index.js';
     ClientsModule.register([
       {
         name: NOTIFICATIONS_SERVICE,
-        transport: Transport.TCP,
+        transport: Transport.RMQ,
         options: {
-          host: envs.notificationsMsHost,
-          port: envs.notificationsMsPort
-        }
-      }
-    ])
-  ]
+          urls: [envs.rabbitUrl],
+          queue: 'notifications_queue',
+          queueOptions: {
+            durable: true,
+          },
+        },
+      },
+    ]),
+  ],
 })
 export class NotificationsModule {}
