@@ -43,7 +43,8 @@ export class AuthController {
         const token = await firstValueFrom(
           this.authClient.send('generateToken', existingUser),
         );
-        this.publisher.publish('auth.tokenGenerated', {
+
+        const eventPayload = {
           userId: existingUser.id ?? existingUser.userId,
           token,
           email: existingUser.email,
@@ -51,7 +52,14 @@ export class AuthController {
           role: existingUser.role,
           googleId: existingUser.googleId,
           picture: existingUser.picture,
-        });
+        };
+
+        console.log(
+          '📤 [Google Auth - Existing User] Emitiendo auth.tokenGenerated:',
+          { userId: eventPayload.userId, email: eventPayload.email },
+        );
+
+        this.publisher.publish('auth.tokenGenerated', eventPayload);
         return res.redirect(`http://localhost:3000/?token=${token}`);
       }
     } catch (error) {
@@ -70,8 +78,7 @@ export class AuthController {
         this.authClient.send('generateToken', newUser),
       );
 
-      // Emitir evento para que otros microservicios lo consuman (publicar al exchange)
-      this.publisher.publish('auth.tokenGenerated', {
+      const eventPayload = {
         userId: newUser.id ?? newUser.userId,
         token,
         email: newUser.email,
@@ -79,7 +86,15 @@ export class AuthController {
         role: newUser.role,
         googleId: newUser.googleId,
         picture: newUser.picture,
-      });
+      };
+
+      console.log(
+        '📤 [Google Auth - New User] Emitiendo auth.tokenGenerated:',
+        { userId: eventPayload.userId, email: eventPayload.email },
+      );
+
+      // Emitir evento para que otros microservicios lo consuman (publicar al exchange)
+      this.publisher.publish('auth.tokenGenerated', eventPayload);
 
       return res.redirect(`http://localhost:3000/?token=${token}`);
     }
@@ -137,7 +152,7 @@ export class AuthController {
       // El content-ms y otros MSs esperan el evento con esta estructura PLANA:
       // { userId, token, email, name, role, ... }
       // NO anidada como { user: { id }, token }
-      this.publisher.publish('auth.tokenGenerated', {
+      const eventPayload = {
         userId: result.user.id ?? result.user.userId,
         token: result.token,
         email: result.user.email,
@@ -145,7 +160,14 @@ export class AuthController {
         role: result.user.role,
         googleId: result.user.googleId,
         picture: result.user.picture,
+      };
+
+      console.log('📤 [Login] Emitiendo auth.tokenGenerated:', {
+        userId: eventPayload.userId,
+        email: eventPayload.email,
       });
+
+      this.publisher.publish('auth.tokenGenerated', eventPayload);
 
       // Guardar usuario en sesión de Passport
       await new Promise<void>((resolve) => {

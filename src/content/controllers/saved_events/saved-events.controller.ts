@@ -27,10 +27,27 @@ export class SavedEventsController {
       .pipe(catchError(handleRpcCustomError));
   }
 
+  // GET /events/saved?userId=<userId> → eventos guardados de un usuario
   @Get()
   findAll(@Query('userId') userId?: string) {
     return this.savedEventsService
       .send('findAllSavedEvents', userId ? { userId } : {})
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  // GET /events/saved/user/:userId → eventos guardados de un usuario (ruta explícita)
+  @Get('user/:userId')
+  findByUser(@Param('userId') userId: string) {
+    return this.savedEventsService
+      .send('findSavedEventsByUser', { userId })
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  // GET /events/saved/:id → un evento guardado por su ID
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.savedEventsService
+      .send('findOneSavedEvent', { id })
       .pipe(catchError(handleRpcCustomError));
   }
 

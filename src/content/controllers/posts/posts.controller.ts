@@ -86,7 +86,12 @@ export class PostsController {
   }
 
   @Get()
-  findAll(@Query() paginationDto: PaginationDto) {
+  findAll(@Query() paginationDto: PaginationDto, @Query('userId') userId?: string) {
+    if (userId) {
+      return this.contentService
+        .send('findPostsByUser', { userId })
+        .pipe(catchError(handleRpcCustomError));
+    }
     return this.contentService
       .send('findAllPosts', paginationDto)
       .pipe(catchError(handleRpcCustomError));

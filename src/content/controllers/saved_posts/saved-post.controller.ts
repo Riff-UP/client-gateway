@@ -29,15 +29,29 @@ export class SavedPostsController {
 
   @Get()
   findAll(@Query('userId') userId?: string) {
+    console.log('📥 GET /posts/saved - userId:', userId);
+
+    const payload = userId ? { userId } : {};
+    console.log('📤 Enviando al microservicio:', payload);
+
     return this.savedPostsService
-      .send('findAllSavedPosts', userId ? { userId } : {})
+      .send('findAllSavedPosts', payload)
       .pipe(catchError(handleRpcCustomError));
   }
 
+  // GET /posts/saved/user/:sqlUserId → posts guardados de un usuario (ruta legada)
   @Get('user/:sqlUserId')
   findByUser(@Param('sqlUserId') sqlUserId: string) {
     return this.savedPostsService
-      .send('findSavedPostsByUser', { sql_user_id: sqlUserId })
+      .send('findAllSavedPosts', { userId: sqlUserId })
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  // GET /posts/saved/:id → un post guardado por su ID
+  @Get(':id')
+  findOne(@Param('id') id: string) {
+    return this.savedPostsService
+      .send('findOneSavedPost', { id })
       .pipe(catchError(handleRpcCustomError));
   }
 

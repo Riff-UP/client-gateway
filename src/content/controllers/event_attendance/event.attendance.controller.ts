@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
@@ -33,6 +34,28 @@ export class EventAttendanceController {
     };
     return this.eventAttendanceService
       .send('createEventAttendance', payload)
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  // GET /events/attendance?userId=<userId>   → asistencias de un usuario
+  // GET /events/attendance?eventId=<eventId> → asistentes de un evento
+  @Get()
+  findAll(
+    @Query('userId') userId?: string,
+    @Query('eventId') eventId?: string,
+  ) {
+    if (userId) {
+      return this.eventAttendanceService
+        .send('findAttendanceByUser', { userId })
+        .pipe(catchError(handleRpcCustomError));
+    }
+    if (eventId) {
+      return this.eventAttendanceService
+        .send('findAttendanceByEvent', { event_id: eventId })
+        .pipe(catchError(handleRpcCustomError));
+    }
+    return this.eventAttendanceService
+      .send('findAllEventAttendances', {})
       .pipe(catchError(handleRpcCustomError));
   }
 

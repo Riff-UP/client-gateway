@@ -5,12 +5,13 @@ const EXCHANGE_TYPE = 'topic';
 const QUEUES = [
   {
     name: 'notifications_queue',
-    bindings: ['auth.tokenGenerated', 'post.created', 'event.*', 'send.resetPassword'],
+    bindings: ['auth.tokenGenerated', 'post.created', 'event.*', 'send.resetPassword',
+    'follow.*'],
   },
   {
     name: 'content_queue',
-    bindings: ['auth.tokenGenerated', 'post.created', 'event.created', 
-        'event.updated', 'event.cancelled'],
+    bindings: ['auth.tokenGenerated', 'post.created', 'event.created',
+        'event.updated', 'event.cancelled', 'follow.*'],
   },
   { name: 'users_queue', bindings: ['user.*', 'auth.tokenGenerated'] },
   // add more queues/bindings as needed

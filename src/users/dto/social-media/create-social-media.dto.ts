@@ -1,4 +1,4 @@
-import { IsNotEmpty, IsString } from 'class-validator';
+import { IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreateSMDto {
   @IsString()
@@ -7,5 +7,13 @@ export class CreateSMDto {
 
   @IsString()
   @IsNotEmpty()
+  platform!: string;
+
+  @IsString()
+  @IsNotEmpty()
   url!: string;
+
+  @IsString()
+  @IsOptional()
+  username?: string;
 }

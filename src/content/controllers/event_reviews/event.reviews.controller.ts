@@ -7,6 +7,7 @@ import {
   Param,
   Patch,
   Post,
+  Query,
   UseGuards,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
@@ -35,8 +36,23 @@ export class EventReviewsController {
       .pipe(catchError(handleRpcCustomError));
   }
 
+  // GET /events/reviews?userId=<userId>   → reseñas hechas por un usuario
+  // GET /events/reviews?eventId=<eventId> → reseñas de un evento específico
   @Get()
-  findAll() {
+  findAll(
+    @Query('userId') userId?: string,
+    @Query('eventId') eventId?: string,
+  ) {
+    if (userId) {
+      return this.eventReviewsService
+        .send('findReviewsByUser', { userId })
+        .pipe(catchError(handleRpcCustomError));
+    }
+    if (eventId) {
+      return this.eventReviewsService
+        .send('findReviewsByEvent', { event_id: eventId })
+        .pipe(catchError(handleRpcCustomError));
+    }
     return this.eventReviewsService
       .send('findAllEventReviews', {})
       .pipe(catchError(handleRpcCustomError));

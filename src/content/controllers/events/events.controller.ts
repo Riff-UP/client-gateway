@@ -71,8 +71,17 @@ export class EventsController {
   }
 
   @Get()
-  findAll(@Query() paginationDto: PaginationDto, @Query('userId') userId?: string) {
-    // Si hay userId en el query, usarlo; de lo contrario no lo incluye
+  findAll(
+    @Query() paginationDto: PaginationDto,
+    @Query('userId') userId?: string,
+    @Query('organizerId') organizerId?: string,
+  ) {
+    if (organizerId) {
+      return this.eventService
+        .send('findEventsByOrganizer', { organizerId })
+        .pipe(catchError(handleRpcCustomError));
+    }
+
     const payload = userId
       ? { ...paginationDto, userId }
       : { ...paginationDto };

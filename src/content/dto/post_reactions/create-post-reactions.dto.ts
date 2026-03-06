@@ -1,13 +1,23 @@
-import { IsIn, IsNotEmpty, IsString } from 'class-validator';
+import { IsIn, IsNotEmpty, IsOptional, IsString } from 'class-validator';
 
 export class CreatePostReactionsDto {
+  // Frontend puede enviar userId o sql_user_id - el backend mapea
   @IsString()
-  @IsNotEmpty()
-  sql_user_id!: string;
+  @IsOptional()
+  userId?: string;
 
   @IsString()
-  @IsNotEmpty()
-  post_id!: string;
+  @IsOptional()
+  sql_user_id?: string;
+
+  // Frontend puede enviar postId o post_id - el backend mapea
+  @IsString()
+  @IsOptional()
+  postId?: string;
+
+  @IsString()
+  @IsOptional()
+  post_id?: string;
 
   @IsString()
   @IsNotEmpty()

@@ -10,6 +10,7 @@ import {
   ParseUUIDPipe,
   Patch,
   Post,
+  Query,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { catchError, firstValueFrom } from 'rxjs';
@@ -30,10 +31,25 @@ export class SocialMediaController {
       .pipe(catchError(handleRpcCustomError));
   }
 
+  // GET /social-media?userId=<uuid>  → redes sociales de un usuario (query param)
+  // GET /social-media                → todas las redes sociales
   @Get()
-  findAll() {
+  findAll(@Query('userId') userId?: string) {
+    if (userId) {
+      return this.socialMediaClient
+        .send('findSocialMediaByUserId', { userId })
+        .pipe(catchError(handleRpcCustomError));
+    }
     return this.socialMediaClient
       .send('findAllSocialMedia', {})
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  // GET /social-media/user/:userId  → redes sociales de un usuario (path param)
+  @Get('user/:userId')
+  findByUserId(@Param('userId', ParseUUIDPipe) userId: string) {
+    return this.socialMediaClient
+      .send('findSocialMediaByUserId', { userId })
       .pipe(catchError(handleRpcCustomError));
   }
 
