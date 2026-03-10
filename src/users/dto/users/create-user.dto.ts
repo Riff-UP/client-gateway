@@ -21,6 +21,10 @@ export class CreateUserDto {
   @IsOptional()
   biography?: string;
 
+  @IsString()
+  @IsOptional()
+  profileImage?: string;
+
   @IsOptional()
   @IsEnum(UserRoleList, {
     message: `role must be one of the following values: ${UserRoleList}}`,

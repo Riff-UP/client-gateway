@@ -6,8 +6,8 @@ export class CreateSMDto {
   userId!: string;
 
   @IsString()
-  @IsNotEmpty()
-  platform!: string;
+  @IsOptional()
+  platform?: string;
 
   @IsString()
   @IsNotEmpty()

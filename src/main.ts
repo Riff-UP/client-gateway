@@ -17,12 +17,16 @@ async function bootstrap() {
 
   // Configurar CORS con más opciones
   app.enableCors({
-    origin: ['http://localhost:3000', 'http://localhost:4000'], // Frontend y backend
-    methods: ['GET', 'HEAD', 'PUT', 'PATCH', 'POST', 'DELETE', 'OPTIONS'],
-    credentials: true,
+    origin: [
+      'https://riffmx.lat',    // Dominio de producción
+      'http://localhost:3000', // Pruebas en local
+      'http://localhost:4000', // Frontend y backend
+    ],
+    methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
+    credentials: true,         // Necesario si usas cookies o sesiones
     allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
     exposedHeaders: ['Authorization'],
-    maxAge: 3600, // Cache preflight por 1 hora
+    maxAge: 3600,              // Cache preflight por 1 hora
   });
 
   // Middleware para logging de peticiones (debugging)

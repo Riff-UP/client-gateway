@@ -60,7 +60,11 @@ export class AuthController {
         );
 
         this.publisher.publish('auth.tokenGenerated', eventPayload);
-        return res.redirect(`http://localhost:3000/?token=${token}`);
+        
+        // --- CÓDIGO ACTUALIZADO AQUÍ ---
+        // Lee la variable de entorno, si no existe usa localhost (ideal para desarrollo local)
+        const frontUrl = process.env.FRONT_URL || 'http://localhost:3000';
+        return res.redirect(`${frontUrl}/?token=${token}`);
       }
     } catch (error) {
       // Si el usuario no existe crear cuenta nueva
@@ -96,7 +100,9 @@ export class AuthController {
       // Emitir evento para que otros microservicios lo consuman (publicar al exchange)
       this.publisher.publish('auth.tokenGenerated', eventPayload);
 
-      return res.redirect(`http://localhost:3000/?token=${token}`);
+      // --- CÓDIGO ACTUALIZADO AQUÍ ---
+      const frontUrl = process.env.FRONT_URL || 'http://localhost:3000';
+      return res.redirect(`${frontUrl}/?token=${token}`);
     }
   }
 
@@ -149,9 +155,6 @@ export class AuthController {
     const result = await firstValueFrom(this.authClient.send('login', payload));
 
     if (result && result.token && result.user) {
-      // El content-ms y otros MSs esperan el evento con esta estructura PLANA:
-      // { userId, token, email, name, role, ... }
-      // NO anidada como { user: { id }, token }
       const eventPayload = {
         userId: result.user.id ?? result.user.userId,
         token: result.token,
@@ -162,7 +165,7 @@ export class AuthController {
         picture: result.user.picture,
       };
 
-      console.log('📤 [Login] Emitiendo auth.tokenGenerated:', {
+      console.log('[Login] Emitiendo auth.tokenGenerated:', {
         userId: eventPayload.userId,
         email: eventPayload.email,
       });
