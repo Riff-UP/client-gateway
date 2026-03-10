@@ -25,7 +25,8 @@ export class PostReactionsController {
     // Mapear userId → sql_user_id y postId → post_id (el backend acepta ambos)
     const payload = {
       ...createPostReactionsDto,
-      sql_user_id: createPostReactionsDto.sql_user_id ?? createPostReactionsDto.userId,
+      sql_user_id:
+        createPostReactionsDto.sql_user_id ?? createPostReactionsDto.userId,
       post_id: createPostReactionsDto.post_id ?? createPostReactionsDto.postId,
     };
 

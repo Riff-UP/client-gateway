@@ -19,10 +19,7 @@ export class R2UploadService {
     });
   }
 
-  async upload(
-    file: Express.Multer.File,
-    folder = 'posts',
-  ): Promise<string> {
+  async upload(file: Express.Multer.File, folder = 'posts'): Promise<string> {
     const ext = file.originalname.split('.').pop() ?? 'bin';
     const key = `${folder}/${randomUUID()}.${ext}`;
 
@@ -40,4 +37,3 @@ export class R2UploadService {
     return url;
   }
 }
-

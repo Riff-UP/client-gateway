@@ -58,4 +58,3 @@ export class SavedEventsController {
       .pipe(catchError(handleRpcCustomError));
   }
 }
-

@@ -26,7 +26,10 @@ export class EventReviewsController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  create(@GetUser() user: any, @Body() createEventReviewDto: CreateEventReviewsDto) {
+  create(
+    @GetUser() user: any,
+    @Body() createEventReviewDto: CreateEventReviewsDto,
+  ) {
     const payload = {
       ...createEventReviewDto,
       userId: user.id, // ← Solo userId (UUID de MongoDB)

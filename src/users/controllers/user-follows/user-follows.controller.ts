@@ -1,4 +1,13 @@
-import { Body, Controller, Delete, Get, Inject, Param, Post, Query } from '@nestjs/common';
+import {
+  Body,
+  Controller,
+  Delete,
+  Get,
+  Inject,
+  Param,
+  Post,
+  Query,
+} from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { USERS_SERVICE } from '../../../config/services.js';
 import { CreateUFDto } from '../../dto/index.js';
@@ -95,5 +104,3 @@ export class UserFollowsController {
       .pipe(catchError(handleRpcCustomError));
   }
 }
-
-

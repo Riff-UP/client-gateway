@@ -5,7 +5,10 @@ import { envs } from './config/index.js';
 import session from 'express-session';
 import passport from 'passport';
 const _connectRedis = require('connect-redis');
-const ConnectRedis = (_connectRedis && _connectRedis.default) ? _connectRedis.default : _connectRedis;
+const ConnectRedis =
+  _connectRedis && _connectRedis.default
+    ? _connectRedis.default
+    : _connectRedis;
 import { createClient as createRedisClient } from 'redis';
 import { UsersClientService } from './users/services/users-client.service.js';
 import { RpcCustomExceptionFilter } from './common/index.js';
@@ -18,20 +21,27 @@ async function bootstrap() {
   // Configurar CORS con más opciones
   app.enableCors({
     origin: [
-      'https://riffmx.lat',    // Dominio de producción
+      'https://riffmx.lat', // Dominio de producción
       'http://localhost:3000', // Pruebas en local
       'http://localhost:4000', // Frontend y backend
     ],
     methods: 'GET,HEAD,PUT,PATCH,POST,DELETE',
-    credentials: true,         // Necesario si usas cookies o sesiones
-    allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With', 'Accept'],
+    credentials: true, // Necesario si usas cookies o sesiones
+    allowedHeaders: [
+      'Content-Type',
+      'Authorization',
+      'X-Requested-With',
+      'Accept',
+    ],
     exposedHeaders: ['Authorization'],
-    maxAge: 3600,              // Cache preflight por 1 hora
+    maxAge: 3600, // Cache preflight por 1 hora
   });
 
   // Middleware para logging de peticiones (debugging)
   app.use((req, res, next) => {
-    logger.log(`${req.method} ${req.url} - Origin: ${req.headers.origin || 'none'}`);
+    logger.log(
+      `${req.method} ${req.url} - Origin: ${req.headers.origin || 'none'}`,
+    );
     next();
   });
 
@@ -49,8 +59,8 @@ async function bootstrap() {
           return false; // Stop reconnecting
         }
         return Math.min(retries * 100, 3000);
-      }
-    }
+      },
+    },
   });
 
   let storeInstance: any = undefined;
@@ -115,7 +125,7 @@ async function bootstrap() {
       const user = await usersClient.findUserById(id);
       done(null, user);
     } catch (err) {
-      done(err as any, null);
+      done(err, null);
     }
   });
 

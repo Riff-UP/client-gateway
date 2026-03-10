@@ -54,7 +54,6 @@ export class UsersController {
       .pipe(catchError(handleRpcCustomError));
   }
 
-
   // GET /users/artists?limit=&offset= → listar usuarios con rol ARTIST
   @Get('artists')
   findArtists(@Query() pagination: any) {

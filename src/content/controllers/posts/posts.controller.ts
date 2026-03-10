@@ -19,7 +19,11 @@ import { memoryStorage } from 'multer';
 import { UpdatePostsDto } from '../../dto';
 import { CONTENT_SERVICE } from '../../../config/services.js';
 import { ClientProxy } from '@nestjs/microservices';
-import { handleRpcCustomError, PaginationDto, R2UploadService } from '../../../common';
+import {
+  handleRpcCustomError,
+  PaginationDto,
+  R2UploadService,
+} from '../../../common';
 import { catchError, firstValueFrom } from 'rxjs';
 import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard.js';
 import { GetUser } from '../../../auth/decorators/get-user.decorator.js';
@@ -55,8 +59,18 @@ export class PostsController {
     let imageUrl: string | undefined = content; // fallback: si mandaron URL directo
 
     if (file) {
-      if (!['image/jpeg', 'image/jpg', 'image/png', 'image/webp', 'image/gif'].includes(file.mimetype)) {
-        throw new BadRequestException(`Tipo de imagen no permitido: ${file.mimetype}`);
+      if (
+        ![
+          'image/jpeg',
+          'image/jpg',
+          'image/png',
+          'image/webp',
+          'image/gif',
+        ].includes(file.mimetype)
+      ) {
+        throw new BadRequestException(
+          `Tipo de imagen no permitido: ${file.mimetype}`,
+        );
       }
       imageUrl = await this.r2.upload(file, 'posts');
       this.logger.log(`[create] Imagen subida a R2: ${imageUrl}`);
@@ -68,11 +82,13 @@ export class PostsController {
       type: (type ?? 'image') as 'image' | 'audio',
       title,
       description,
-      content: imageUrl,   // ← URL final de la imagen en R2
+      content: imageUrl, // ← URL final de la imagen en R2
       provider,
     };
 
-    this.logger.log(`[create] Enviando a content-ms: ${JSON.stringify(payload)}`);
+    this.logger.log(
+      `[create] Enviando a content-ms: ${JSON.stringify(payload)}`,
+    );
 
     try {
       const result = await firstValueFrom(
@@ -80,13 +96,16 @@ export class PostsController {
       );
       return result;
     } catch (err) {
-      this.logger.error('Error en createPost', (err as any)?.message ?? String(err));
+      this.logger.error('Error en createPost', err?.message ?? String(err));
       throw err;
     }
   }
 
   @Get()
-  findAll(@Query() paginationDto: PaginationDto, @Query('userId') userId?: string) {
+  findAll(
+    @Query() paginationDto: PaginationDto,
+    @Query('userId') userId?: string,
+  ) {
     if (userId) {
       return this.contentService
         .send('findPostsByUser', { userId })

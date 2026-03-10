@@ -26,4 +26,3 @@ export class UserContextInterceptor implements NestInterceptor {
     return next.handle();
   }
 }
-

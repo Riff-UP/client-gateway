@@ -60,7 +60,10 @@ export const handleRpcCustomError = (error: any): never => {
 
   // Fallback: Si el microservicio explota con un error desconocido (ej. base de datos caída)
   // Log full error for debugging
-  logger.error('Unexpected RPC error:', JSON.stringify(error, Object.getOwnPropertyNames(error)));
+  logger.error(
+    'Unexpected RPC error:',
+    JSON.stringify(error, Object.getOwnPropertyNames(error)),
+  );
   if (error && (error.message || error.stack)) {
     logger.error(error.message || error.stack);
   }

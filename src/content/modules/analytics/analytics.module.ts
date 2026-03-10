@@ -2,10 +2,10 @@ import { Module } from '@nestjs/common';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { envs } from '../../../config';
 import { CONTENT_SERVICE } from '../../../config/services';
-import { SavedEventsController } from '../../controllers/saved_events/saved-events.controller';
+import { AnalyticsController } from '../../controllers';
 
 @Module({
-  controllers: [SavedEventsController],
+  controllers: [AnalyticsController],
   imports: [
     ClientsModule.register([
       {
@@ -19,4 +19,4 @@ import { SavedEventsController } from '../../controllers/saved_events/saved-even
     ]),
   ],
 })
-export class SavedEventsModule {}
+export class AnalyticsModule {}

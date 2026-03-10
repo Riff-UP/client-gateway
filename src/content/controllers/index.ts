@@ -1,3 +1,4 @@
+export * from './analytics/analytics.controller';
 export * from './event_attendance/event.attendance.controller';
 export * from './event_reviews/event.reviews.controller';
 export * from './events/events.controller';

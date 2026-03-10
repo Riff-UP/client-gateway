@@ -73,10 +73,9 @@ export const envs = {
   // Ensure a heartbeat is present on the rabbit URL to reduce unexpected
   // connection closures due to short heartbeats/timeouts. If the user already
   // included query params, append using '&', otherwise use '?'.
-  rabbitUrl:
-    envVars.RABBIT_URL.includes('?')
-      ? `${envVars.RABBIT_URL}&heartbeat=60`
-      : `${envVars.RABBIT_URL}?heartbeat=60`,
+  rabbitUrl: envVars.RABBIT_URL.includes('?')
+    ? `${envVars.RABBIT_URL}&heartbeat=60`
+    : `${envVars.RABBIT_URL}?heartbeat=60`,
   redisUrl: envVars.REDIS_URL,
 
   r2Endpoint: envVars.R2_ENDPOINT,

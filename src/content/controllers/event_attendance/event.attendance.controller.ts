@@ -27,7 +27,10 @@ export class EventAttendanceController {
 
   @Post()
   @UseGuards(JwtAuthGuard)
-  create(@GetUser() user: any, @Body() createEventAttendanceDto: CreateEventAttendanceDto) {
+  create(
+    @GetUser() user: any,
+    @Body() createEventAttendanceDto: CreateEventAttendanceDto,
+  ) {
     const payload = {
       ...createEventAttendanceDto,
       userId: user.id, // ← Solo userId (UUID de MongoDB)

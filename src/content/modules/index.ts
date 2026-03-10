@@ -1,3 +1,4 @@
+export * from './analytics/analytics.module';
 export * from './event_attendance/event-attendance.module';
 export * from './event_reviews/event-reviews.module';
 export * from './events/events.module';

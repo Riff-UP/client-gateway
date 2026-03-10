@@ -21,11 +21,11 @@ export class AuthController {
     @Inject(USERS_SERVICE) private readonly authClient: ClientProxy,
     @Inject(EVENTS_SERVICE) private readonly eventsClient: ClientProxy,
     private readonly publisher: PublisherService,
-  ) { }
+  ) {}
 
   @Get('google')
   @UseGuards(AuthGuard('google'))
-  async googleAuth(@Req() req) { }
+  async googleAuth(@Req() req) {}
 
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
@@ -60,7 +60,7 @@ export class AuthController {
         );
 
         this.publisher.publish('auth.tokenGenerated', eventPayload);
-        
+
         // --- CÓDIGO ACTUALIZADO AQUÍ ---
         // Lee la variable de entorno, si no existe usa localhost (ideal para desarrollo local)
         const frontUrl = process.env.FRONT_URL || 'http://localhost:3000';
@@ -176,7 +176,9 @@ export class AuthController {
       await new Promise<void>((resolve) => {
         req.logIn(result.user, (err) => {
           if (err) {
-            this.publisher['logger']?.warn?.('req.logIn failed: ' + String(err));
+            this.publisher['logger']?.warn?.(
+              'req.logIn failed: ' + String(err),
+            );
           }
           resolve();
         });
