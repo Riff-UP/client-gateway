@@ -151,9 +151,58 @@ describe('AnalyticsController', () => {
     expect(errors[0].property).toBe('code');
   });
 
+  it('acepta parámetros extra conocidos del callback de Google', async () => {
+    const query = await transform(
+      {
+        code: 'oauth-code-123',
+        state: 'riff-benchmark-view',
+        iss: 'https://accounts.google.com',
+        scope: 'openid email profile',
+        authuser: '0',
+        prompt: 'consent',
+        hd: 'riffmx.lat',
+      },
+      AnalyticsAuthCallbackQueryDto,
+      'query',
+    );
+
+    expect(query).toMatchObject({
+      code: 'oauth-code-123',
+      state: 'riff-benchmark-view',
+      iss: 'https://accounts.google.com',
+      scope: 'openid email profile',
+      authuser: '0',
+      prompt: 'consent',
+      hd: 'riffmx.lat',
+    });
+  });
+
+  it('sigue rechazando parámetros desconocidos en el callback OAuth', async () => {
+    await expect(
+      transform(
+        {
+          code: 'oauth-code-123',
+          state: 'riff-benchmark-view',
+          unknown: 'boom',
+        },
+        AnalyticsAuthCallbackQueryDto,
+        'query',
+      ),
+    ).rejects.toMatchObject({
+      response: {
+        message: ['property unknown should not exist'],
+      },
+    });
+  });
+
   it('reenvía el code del callback OAuth y responde HTML para cerrar el popup', async () => {
     const query = await transform(
-      { code: 'oauth-code-123', state: 'riff-benchmark-view' },
+      {
+        code: 'oauth-code-123',
+        state: 'riff-benchmark-view',
+        iss: 'https://accounts.google.com',
+        scope: 'openid email profile',
+      },
       AnalyticsAuthCallbackQueryDto,
       'query',
     );
