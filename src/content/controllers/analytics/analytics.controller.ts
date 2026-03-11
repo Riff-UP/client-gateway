@@ -141,7 +141,7 @@ export class AnalyticsController {
     @Query() query: AnalyticsAuthCallbackQueryDto,
     @Res() res: AnalyticsHtmlResponse,
   ) {
-    await firstValueFrom(
+    const exchangeResponse = await firstValueFrom(
       this.contentService
         .send<unknown, { code: string }>('exchangeAnalyticsGoogleCode', {
           code: query.code,
@@ -149,9 +149,11 @@ export class AnalyticsController {
         .pipe(catchError(handleRpcCustomError)),
     );
 
+    const accessToken = this.extractAccessToken(exchangeResponse);
+
     return res
       .type('html')
-      .send(this.buildOAuthPopupHtml(this.readState(query)));
+      .send(this.buildOAuthPopupHtml(this.readState(query), accessToken));
   }
 
   private extractGoogleAuthUrl(response: unknown): string | undefined {
@@ -172,10 +174,18 @@ export class AnalyticsController {
       : undefined;
   }
 
-  private buildOAuthPopupHtml(state?: string): string {
+  private extractAccessToken(response: unknown): string | undefined {
+    if (!response || typeof response !== 'object') return undefined;
+    const r = response as Record<string, unknown>;
+    const token = r['access_token'] ?? (r['data'] as Record<string, unknown> | undefined)?.['access_token'];
+    return typeof token === 'string' && token ? token : undefined;
+  }
+
+  private buildOAuthPopupHtml(state?: string, accessToken?: string): string {
     const serializedPayload = this.serializeForInlineScript({
       state,
       success: true,
+      ...(accessToken ? { access_token: accessToken } : {}),
     });
 
     return `<!DOCTYPE html>
