@@ -22,6 +22,11 @@ interface EnvVars {
   R2_SECRET_KEY: string;
   R2_BUCKET: string;
   R2_PUBLIC_URL: string;
+
+  GOOGLE_CLIENT_ID: string;
+  GOOGLE_CLIENT_SECRET: string;
+  GOOGLE_CALLBACK_URL: string;
+  ANALYTICS_CALLBACK_URL?: string;
 }
 
 const envSchema = joi
@@ -46,6 +51,11 @@ const envSchema = joi
     R2_SECRET_KEY: joi.string().required(),
     R2_BUCKET: joi.string().required(),
     R2_PUBLIC_URL: joi.string().required(),
+
+    GOOGLE_CLIENT_ID: joi.string().required(),
+    GOOGLE_CLIENT_SECRET: joi.string().required(),
+    GOOGLE_CALLBACK_URL: joi.string().required(),
+    ANALYTICS_CALLBACK_URL: joi.string().optional(),
   })
   .unknown(true);
 
@@ -83,4 +93,9 @@ export const envs = {
   r2SecretKey: envVars.R2_SECRET_KEY,
   r2Bucket: envVars.R2_BUCKET,
   r2PublicUrl: envVars.R2_PUBLIC_URL,
+
+  googleClientId: envVars.GOOGLE_CLIENT_ID,
+  googleClientSecret: envVars.GOOGLE_CLIENT_SECRET,
+  googleCallbackUrl: envVars.GOOGLE_CALLBACK_URL,
+  analyticsCallbackUrl: envVars.ANALYTICS_CALLBACK_URL ?? '',
 };
