@@ -29,5 +29,5 @@ export class CreateUserDto {
   @IsEnum(UserRoleList, {
     message: `role must be one of the following values: ${UserRoleList}}`,
   })
-  role: UserRole = UserRole.USER;
+  role?: UserRole;
 }
