@@ -27,6 +27,12 @@ interface ResetResult {
   token?: string;
 }
 
+interface CreateNotificationPayload {
+  userIdReceiver: string;
+  type: 'NEW_EVENT';
+  message: string;
+}
+
 @Controller('password-resets')
 export class PasswordResetsController {
   constructor(
@@ -44,6 +50,43 @@ export class PasswordResetsController {
         .send('sendPasswordReset', mailDto)
         .pipe(catchError(handleRpcCustomError)),
     )) as ResetResult;
+
+    const userIdReceiver = result.userId ?? result.id;
+    if (userIdReceiver) {
+      const notificationPayload: CreateNotificationPayload = {
+        userIdReceiver,
+        type: 'NEW_EVENT',
+        message: 'Se solicito un restablecimiento de contrasena.',
+      };
+
+      // No bloquear el flujo de reset si notifications-ms no responde.
+      this.notificationsClient
+        .send('createNotification', notificationPayload)
+        .pipe(catchError(handleRpcCustomError))
+        .subscribe({
+          next: () => {
+            console.log('[PasswordReset] Notificacion enviada a notifications-ms', {
+              userIdReceiver,
+              mail: mailDto.mail,
+            });
+          },
+          error: (error: unknown) => {
+            console.error(
+              '[PasswordReset] Error al enviar notificacion a notifications-ms',
+              {
+                userIdReceiver,
+                mail: mailDto.mail,
+                error,
+              },
+            );
+          },
+        });
+    } else {
+      console.warn('[PasswordReset] Users-MS no devolvio userId/id, se omite notificacion', {
+        mail: mailDto.mail,
+      });
+    }
+
     return result;
   }
 

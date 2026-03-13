@@ -25,7 +25,7 @@ import { PasswordResetsController } from '../../controllers/index.js';
         transport: Transport.RMQ,
         options: {
           urls: [envs.rabbitUrl],
-          queue: 'riff_queue',
+          queue: 'notifications_queue',
           queueOptions: {
             durable: true,
           },
