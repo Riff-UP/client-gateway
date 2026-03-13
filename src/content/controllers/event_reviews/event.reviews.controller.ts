@@ -39,6 +39,14 @@ export class EventReviewsController {
       .pipe(catchError(handleRpcCustomError));
   }
 
+  @Get('pending')
+  @UseGuards(JwtAuthGuard)
+  findPendingReviews(@GetUser() user: any) {
+    return this.eventReviewsService
+      .send('findPendingReviews', { userId: user.id })
+      .pipe(catchError(handleRpcCustomError));
+  }
+
   // GET /events/reviews?userId=<userId>   → reseñas hechas por un usuario
   // GET /events/reviews?eventId=<eventId> → reseñas de un evento específico
   @Get()
