@@ -20,11 +20,18 @@ import { handleRpcCustomError } from '../../../common/index.js';
 import { catchError, firstValueFrom } from 'rxjs';
 
 interface ResetResult {
+  message?: string;
   userId?: string;
   id?: string;
   userName?: string;
   name?: string;
   token?: string;
+}
+
+interface UserLookupResult {
+  id?: string;
+  userId?: string;
+  email?: string;
 }
 
 interface CreateNotificationPayload {
@@ -44,6 +51,13 @@ export class PasswordResetsController {
   @Post('send')
   @HttpCode(HttpStatus.OK)
   async sendPasswordReset(@Body() mailDto: MailDto) {
+    // Obtener usuario por email para asegurar userId para notifications-ms.
+    const user = (await firstValueFrom(
+      this.passwordResetsClient
+        .send('findUserByEmail', { email: mailDto.mail })
+        .pipe(catchError(handleRpcCustomError)),
+    )) as UserLookupResult;
+
     // Crear el reset en Users-MS y obtener token/datos
     const result = (await firstValueFrom(
       this.passwordResetsClient
@@ -51,7 +65,7 @@ export class PasswordResetsController {
         .pipe(catchError(handleRpcCustomError)),
     )) as ResetResult;
 
-    const userIdReceiver = result.userId ?? result.id;
+    const userIdReceiver = result.userId ?? result.id ?? user.id ?? user.userId;
     if (userIdReceiver) {
       const notificationPayload: CreateNotificationPayload = {
         userIdReceiver,

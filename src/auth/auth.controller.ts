@@ -2,6 +2,7 @@ import {
   Controller,
   Get,
   Inject,
+  Logger,
   Post,
   Body,
   Req,
@@ -11,12 +12,15 @@ import {
 import { AuthGuard } from '@nestjs/passport';
 import { ClientProxy } from '@nestjs/microservices';
 import { USERS_SERVICE, EVENTS_SERVICE } from '../config/services.js';
+import { envs } from '../config/index.js';
 import { PublisherService } from '../common/publisher.service.js';
 import type { Request, Response } from 'express';
 import { firstValueFrom } from 'rxjs';
 
 @Controller('auth')
 export class AuthController {
+  private readonly logger = new Logger(AuthController.name);
+
   constructor(
     @Inject(USERS_SERVICE) private readonly authClient: ClientProxy,
     @Inject(EVENTS_SERVICE) private readonly eventsClient: ClientProxy,
@@ -30,7 +34,13 @@ export class AuthController {
   @Get('google/callback')
   @UseGuards(AuthGuard('google'))
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
+    if (!req.user?.email) {
+      this.logger.error('[Google Auth] Missing user/email in callback payload');
+      return res.redirect(`${envs.frontendUrl}/login?error=google_auth_failed`);
+    }
+
     const { email, firstName, lastName, googleId } = req.user;
+    let user: any = null;
 
     try {
       // Buscar si el usuario ya existe por email
@@ -39,71 +49,73 @@ export class AuthController {
       );
 
       if (existingUser) {
-        // Si el usuario existe generar token y redirigir
-        const token = await firstValueFrom(
-          this.authClient.send('generateToken', existingUser),
-        );
-
-        const eventPayload = {
-          userId: existingUser.id ?? existingUser.userId,
-          token,
-          email: existingUser.email,
-          name: existingUser.name,
-          role: existingUser.role,
-          googleId: existingUser.googleId,
-          picture: existingUser.picture,
-        };
-
-        console.log(
-          '📤 [Google Auth - Existing User] Emitiendo auth.tokenGenerated:',
-          { userId: eventPayload.userId, email: eventPayload.email },
-        );
-
-        this.publisher.publish('auth.tokenGenerated', eventPayload);
-
-        // --- CÓDIGO ACTUALIZADO AQUÍ ---
-        // Lee la variable de entorno, si no existe usa localhost (ideal para desarrollo local)
-        const frontUrl = process.env.FRONT_URL || 'http://localhost:3000';
-        return res.redirect(`${frontUrl}/?token=${token}`);
+        user = existingUser;
       }
     } catch (error) {
-      // Si el usuario no existe crear cuenta nueva
-      const newUser = await firstValueFrom(
-        this.authClient.send('createUserGoogle', {
-          name: `${firstName} ${lastName}`,
-          email,
-          googleId,
-          password: '',
-          role: 'USER',
-        }),
+      this.logger.error(
+        `[Google Auth] findUserByEmail failed for ${email}: ${error?.message || error}`,
       );
-
-      const token = await firstValueFrom(
-        this.authClient.send('generateToken', newUser),
-      );
-
-      const eventPayload = {
-        userId: newUser.id ?? newUser.userId,
-        token,
-        email: newUser.email,
-        name: newUser.name,
-        role: newUser.role,
-        googleId: newUser.googleId,
-        picture: newUser.picture,
-      };
-
-      console.log(
-        '📤 [Google Auth - New User] Emitiendo auth.tokenGenerated:',
-        { userId: eventPayload.userId, email: eventPayload.email },
-      );
-
-      // Emitir evento para que otros microservicios lo consuman (publicar al exchange)
-      this.publisher.publish('auth.tokenGenerated', eventPayload);
-
-      // --- CÓDIGO ACTUALIZADO AQUÍ ---
-      const frontUrl = process.env.FRONT_URL || 'http://localhost:3000';
-      return res.redirect(`${frontUrl}/?token=${token}`);
+      return res.redirect(`${envs.frontendUrl}/login?error=oauth_user_lookup`);
     }
+
+    if (!user) {
+      try {
+        user = await firstValueFrom(
+          this.authClient.send('createUserGoogle', {
+            name: `${firstName} ${lastName}`,
+            email,
+            googleId,
+            password: '',
+            role: 'USER',
+          }),
+        );
+      } catch (error) {
+        this.logger.error(
+          `[Google Auth] createUserGoogle failed for ${email}: ${error?.message || error}`,
+        );
+        return res.redirect(`${envs.frontendUrl}/login?error=oauth_user_create`);
+      }
+    }
+
+    if (!user) {
+      this.logger.error(`[Google Auth] User is null after lookup/create for ${email}`);
+      return res.redirect(`${envs.frontendUrl}/login?error=oauth_user_missing`);
+    }
+
+    let token: string;
+    try {
+      token = await firstValueFrom(this.authClient.send('generateToken', user));
+    } catch (error) {
+      this.logger.error(
+        `[Google Auth] generateToken failed for ${email}: ${error?.message || error}`,
+      );
+      return res.redirect(`${envs.frontendUrl}/login?error=oauth_token`);
+    }
+
+    const eventPayload = {
+      userId: user.id ?? user.userId,
+      token,
+      email: user.email,
+      name: user.name,
+      role: user.role,
+      googleId: user.googleId,
+      picture: user.picture,
+    };
+
+    this.logger.log('[Google Auth] Emitiendo auth.tokenGenerated', {
+      userId: eventPayload.userId,
+      email: eventPayload.email,
+    });
+
+    try {
+      this.publisher.publish('auth.tokenGenerated', eventPayload);
+    } catch (error) {
+      this.logger.warn(
+        `[Google Auth] publish auth.tokenGenerated failed: ${error?.message || error}`,
+      );
+    }
+
+    return res.redirect(`${envs.frontendUrl}/?token=${encodeURIComponent(token)}`);
   }
 
   @Get('logout')

@@ -26,6 +26,8 @@ interface EnvVars {
   GOOGLE_CLIENT_ID: string;
   GOOGLE_CLIENT_SECRET: string;
   GOOGLE_CALLBACK_URL: string;
+  FRONTEND_URL?: string;
+  FRONT_URL?: string;
   ANALYTICS_CALLBACK_URL?: string;
 }
 
@@ -55,6 +57,8 @@ const envSchema = joi
     GOOGLE_CLIENT_ID: joi.string().required(),
     GOOGLE_CLIENT_SECRET: joi.string().required(),
     GOOGLE_CALLBACK_URL: joi.string().required(),
+    FRONTEND_URL: joi.string().uri().optional(),
+    FRONT_URL: joi.string().uri().optional(),
     ANALYTICS_CALLBACK_URL: joi.string().optional(),
   })
   .unknown(true);
@@ -97,5 +101,7 @@ export const envs = {
   googleClientId: envVars.GOOGLE_CLIENT_ID,
   googleClientSecret: envVars.GOOGLE_CLIENT_SECRET,
   googleCallbackUrl: envVars.GOOGLE_CALLBACK_URL,
+  frontendUrl:
+    envVars.FRONTEND_URL ?? envVars.FRONT_URL ?? 'http://localhost:3000',
   analyticsCallbackUrl: envVars.ANALYTICS_CALLBACK_URL ?? '',
 };
