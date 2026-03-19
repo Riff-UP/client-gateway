@@ -31,7 +31,13 @@ export class GoogleCallbackGuard extends AuthGuard('google') {
     }
   }
 
-  handleRequest(err: unknown, user: unknown, info: unknown): unknown {
+  handleRequest<TUser = any>(
+    err: unknown,
+    user: unknown,
+    info: unknown,
+    _context: ExecutionContext,
+    _status?: unknown,
+  ): TUser {
     if (err) {
       throw err;
     }
@@ -40,7 +46,7 @@ export class GoogleCallbackGuard extends AuthGuard('google') {
       throw new UnauthorizedException(this.extractErrorMessage(info));
     }
 
-    return user;
+    return user as TUser;
   }
 
   private getOAuthErrorCode(error: unknown): string {
