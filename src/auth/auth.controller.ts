@@ -27,6 +27,82 @@ export class AuthController {
     private readonly publisher: PublisherService,
   ) {}
 
+  private extractErrorStatusCode(error: unknown): number | undefined {
+    const candidate = error as
+      | {
+          statusCode?: number;
+          error?: { statusCode?: number };
+          response?: { statusCode?: number };
+        }
+      | undefined;
+
+    if (typeof candidate?.statusCode === 'number') {
+      return candidate.statusCode;
+    }
+
+    if (typeof candidate?.error?.statusCode === 'number') {
+      return candidate.error.statusCode;
+    }
+
+    if (typeof candidate?.response?.statusCode === 'number') {
+      return candidate.response.statusCode;
+    }
+
+    return undefined;
+  }
+
+  private extractErrorMessage(error: unknown): string {
+    if (typeof error === 'string') {
+      return error;
+    }
+
+    const candidate = error as
+      | {
+          message?: string;
+          error?: { message?: string };
+          response?: { message?: string };
+        }
+      | undefined;
+
+    if (typeof candidate?.message === 'string') {
+      return candidate.message;
+    }
+
+    if (typeof candidate?.error?.message === 'string') {
+      return candidate.error.message;
+    }
+
+    if (typeof candidate?.response?.message === 'string') {
+      return candidate.response.message;
+    }
+
+    return String(error);
+  }
+
+  private isNotFoundError(error: unknown): boolean {
+    const statusCode = this.extractErrorStatusCode(error);
+    if (statusCode === 404) {
+      return true;
+    }
+
+    const message = this.extractErrorMessage(error).toLowerCase();
+    return message.includes('not found');
+  }
+
+  private isConflictError(error: unknown): boolean {
+    const statusCode = this.extractErrorStatusCode(error);
+    if (statusCode === 409) {
+      return true;
+    }
+
+    const message = this.extractErrorMessage(error).toLowerCase();
+    return (
+      message.includes('already exists') ||
+      message.includes('duplicate') ||
+      message.includes('conflict')
+    );
+  }
+
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth(@Req() req) {}
@@ -39,7 +115,8 @@ export class AuthController {
       return res.redirect(`${envs.frontendUrl}/login?error=google_auth_failed`);
     }
 
-    const { email, firstName, lastName, googleId } = req.user;
+    const { firstName, lastName, googleId } = req.user;
+    const email = String(req.user.email).trim().toLowerCase();
     let user: any = null;
 
     try {
@@ -52,10 +129,16 @@ export class AuthController {
         user = existingUser;
       }
     } catch (error) {
-      this.logger.error(
-        `[Google Auth] findUserByEmail failed for ${email}: ${error?.message || error}`,
-      );
-      return res.redirect(`${envs.frontendUrl}/login?error=oauth_user_lookup`);
+      if (this.isNotFoundError(error)) {
+        this.logger.warn(
+          `[Google Auth] User not found by email, proceeding to create: ${email}`,
+        );
+      } else {
+        this.logger.error(
+          `[Google Auth] findUserByEmail failed for ${email}: ${this.extractErrorMessage(error)}`,
+        );
+        return res.redirect(`${envs.frontendUrl}/login?error=oauth_user_lookup`);
+      }
     }
 
     if (!user) {
@@ -70,10 +153,27 @@ export class AuthController {
           }),
         );
       } catch (error) {
-        this.logger.error(
-          `[Google Auth] createUserGoogle failed for ${email}: ${error?.message || error}`,
+        if (!this.isConflictError(error)) {
+          this.logger.error(
+            `[Google Auth] createUserGoogle failed for ${email}: ${this.extractErrorMessage(error)}`,
+          );
+          return res.redirect(`${envs.frontendUrl}/login?error=oauth_user_create`);
+        }
+
+        this.logger.warn(
+          `[Google Auth] createUserGoogle conflict for ${email}, retrying findUserByEmail`,
         );
-        return res.redirect(`${envs.frontendUrl}/login?error=oauth_user_create`);
+
+        try {
+          user = await firstValueFrom(
+            this.authClient.send('findUserByEmail', { email }),
+          );
+        } catch (retryError) {
+          this.logger.error(
+            `[Google Auth] retry findUserByEmail failed for ${email}: ${this.extractErrorMessage(retryError)}`,
+          );
+          return res.redirect(`${envs.frontendUrl}/login?error=oauth_user_lookup`);
+        }
       }
     }
 
@@ -87,7 +187,7 @@ export class AuthController {
       token = await firstValueFrom(this.authClient.send('generateToken', user));
     } catch (error) {
       this.logger.error(
-        `[Google Auth] generateToken failed for ${email}: ${error?.message || error}`,
+        `[Google Auth] generateToken failed for ${email}: ${this.extractErrorMessage(error)}`,
       );
       return res.redirect(`${envs.frontendUrl}/login?error=oauth_token`);
     }
