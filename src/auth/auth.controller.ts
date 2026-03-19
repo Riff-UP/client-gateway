@@ -14,6 +14,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import { USERS_SERVICE, EVENTS_SERVICE } from '../config/services.js';
 import { envs } from '../config/index.js';
 import { PublisherService } from '../common/publisher.service.js';
+import { GoogleCallbackGuard } from './guards/google-callback.guard.js';
 import type { Request, Response } from 'express';
 import { firstValueFrom } from 'rxjs';
 
@@ -103,16 +104,21 @@ export class AuthController {
     );
   }
 
+  private redirectGoogleAuthError(res: Response, errorCode: string) {
+    const redirectUrl = `${envs.frontendUrl}/?error=${encodeURIComponent(errorCode)}&auth=google`;
+    return res.redirect(redirectUrl);
+  }
+
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth(@Req() req) {}
 
   @Get('google/callback')
-  @UseGuards(AuthGuard('google'))
+  @UseGuards(GoogleCallbackGuard)
   async googleAuthRedirect(@Req() req, @Res() res: Response) {
     if (!req.user?.email) {
       this.logger.error('[Google Auth] Missing user/email in callback payload');
-      return res.redirect(`${envs.frontendUrl}/login?error=google_auth_failed`);
+      return this.redirectGoogleAuthError(res, 'google_auth_failed');
     }
 
     const { firstName, lastName, googleId } = req.user;
@@ -137,7 +143,7 @@ export class AuthController {
         this.logger.error(
           `[Google Auth] findUserByEmail failed for ${email}: ${this.extractErrorMessage(error)}`,
         );
-        return res.redirect(`${envs.frontendUrl}/login?error=oauth_user_lookup`);
+        return this.redirectGoogleAuthError(res, 'oauth_user_lookup');
       }
     }
 
@@ -157,7 +163,7 @@ export class AuthController {
           this.logger.error(
             `[Google Auth] createUserGoogle failed for ${email}: ${this.extractErrorMessage(error)}`,
           );
-          return res.redirect(`${envs.frontendUrl}/login?error=oauth_user_create`);
+          return this.redirectGoogleAuthError(res, 'oauth_user_create');
         }
 
         this.logger.warn(
@@ -172,14 +178,14 @@ export class AuthController {
           this.logger.error(
             `[Google Auth] retry findUserByEmail failed for ${email}: ${this.extractErrorMessage(retryError)}`,
           );
-          return res.redirect(`${envs.frontendUrl}/login?error=oauth_user_lookup`);
+          return this.redirectGoogleAuthError(res, 'oauth_user_lookup');
         }
       }
     }
 
     if (!user) {
       this.logger.error(`[Google Auth] User is null after lookup/create for ${email}`);
-      return res.redirect(`${envs.frontendUrl}/login?error=oauth_user_missing`);
+      return this.redirectGoogleAuthError(res, 'oauth_user_missing');
     }
 
     let token: string;
@@ -189,7 +195,7 @@ export class AuthController {
       this.logger.error(
         `[Google Auth] generateToken failed for ${email}: ${this.extractErrorMessage(error)}`,
       );
-      return res.redirect(`${envs.frontendUrl}/login?error=oauth_token`);
+      return this.redirectGoogleAuthError(res, 'oauth_token');
     }
 
     const eventPayload = {

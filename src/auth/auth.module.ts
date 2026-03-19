@@ -4,6 +4,7 @@ import { JwtModule } from '@nestjs/jwt';
 import { GoogleStrategy } from './strategies/google.strategy';
 import { JwtStrategy } from './strategies/jwt.strategy';
 import { AuthController } from './auth.controller';
+import { GoogleCallbackGuard } from './guards/google-callback.guard.js';
 import { ClientsModule, Transport } from '@nestjs/microservices';
 import { USERS_SERVICE, EVENTS_SERVICE } from '../config/services.js';
 import { envs } from '../config/index.js';
@@ -39,7 +40,7 @@ import { PublisherService } from '../common/publisher.service.js';
     ]),
   ],
   controllers: [AuthController],
-  providers: [GoogleStrategy, JwtStrategy, PublisherService],
+  providers: [GoogleStrategy, JwtStrategy, PublisherService, GoogleCallbackGuard],
   exports: [JwtStrategy, PassportModule],
 })
 export class AuthModule {}
