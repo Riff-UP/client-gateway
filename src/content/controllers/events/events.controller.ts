@@ -14,7 +14,7 @@ import {
 import { ClientProxy } from '@nestjs/microservices';
 import { CONTENT_SERVICE, USERS_SERVICE } from '../../../config/services';
 import { CreateEventDto, UpdateEventDto } from '../../dto';
-import { catchError, firstValueFrom } from 'rxjs';
+import { catchError, firstValueFrom, map } from 'rxjs';
 import { handleRpcCustomError, PaginationDto } from '../../../common/index';
 import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard';
 import { GetUser } from '../../../auth/decorators/get-user.decorator';
@@ -89,6 +89,39 @@ export class EventsController {
     return this.eventService
       .send('findAllEvents', payload)
       .pipe(catchError(handleRpcCustomError));
+  }
+
+  @Get(':eventId/attendance/total')
+  findAttendanceTotal(@Param('eventId') eventId: string) {
+    return this.eventService
+      .send('getEventAttendanceTotal', { eventId })
+      .pipe(
+        map((response: { eventId?: string; totalAttendees?: number }) => ({
+          eventId: response?.eventId ?? eventId,
+          totalAttendees: response?.totalAttendees ?? 0,
+        })),
+        catchError(handleRpcCustomError),
+      );
+  }
+
+  @Get(':eventId/rating/average')
+  findRatingAverage(@Param('eventId') eventId: string) {
+    return this.eventService
+      .send('getEventRatingAverage', { eventId })
+      .pipe(
+        map(
+          (response: {
+            eventId?: string;
+            averageRating?: number;
+            totalRatings?: number;
+          }) => ({
+            eventId: response?.eventId ?? eventId,
+            averageRating: response?.averageRating ?? 0,
+            totalRatings: response?.totalRatings ?? 0,
+          }),
+        ),
+        catchError(handleRpcCustomError),
+      );
   }
 
   @Get(':id')

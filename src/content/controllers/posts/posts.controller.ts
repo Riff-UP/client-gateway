@@ -24,7 +24,7 @@ import {
   PaginationDto,
   R2UploadService,
 } from '../../../common';
-import { catchError, firstValueFrom } from 'rxjs';
+import { catchError, firstValueFrom, map } from 'rxjs';
 import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard.js';
 import { GetUser } from '../../../auth/decorators/get-user.decorator.js';
 
@@ -114,6 +114,19 @@ export class PostsController {
     return this.contentService
       .send('findAllPosts', paginationDto)
       .pipe(catchError(handleRpcCustomError));
+  }
+
+  @Get(':postId/reactions/total')
+  findReactionsTotal(@Param('postId') postId: string) {
+    return this.contentService
+      .send('getPostReactionsTotal', { postId })
+      .pipe(
+        map((response: { postId?: string; totalReactions?: number }) => ({
+          postId: response?.postId ?? postId,
+          totalReactions: response?.totalReactions ?? 0,
+        })),
+        catchError(handleRpcCustomError),
+      );
   }
 
   @Get(':id')
