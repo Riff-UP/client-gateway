@@ -12,6 +12,7 @@ import {
   UseGuards,
   HttpException,
   HttpStatus,
+  ForbiddenException,
 } from '@nestjs/common';
 import { ClientProxy } from '@nestjs/microservices';
 import { USERS_SERVICE } from '../../../config/services.js';
@@ -19,7 +20,9 @@ import { CreateUserDto, UpdateUserDto } from '../../dto/index.js';
 import { handleRpcCustomError } from '../../../common/index.js';
 import { catchError, map, throwError, TimeoutError, timeout } from 'rxjs';
 import { JwtAuthGuard } from '../../../auth/guards/jwt-auth.guard.js';
+import { RolesGuard } from '../../../auth/guards/roles.guard.js';
 import { GetUser } from '../../../auth/decorators/get-user.decorator.js';
+import { Roles } from '../../../auth/decorators/roles.decorator.js';
 
 @Controller('users')
 export class UsersController {
@@ -36,18 +39,9 @@ export class UsersController {
         }
       | undefined;
 
-    if (typeof candidate?.statusCode === 'number') {
-      return candidate.statusCode;
-    }
-
-    if (typeof candidate?.error?.statusCode === 'number') {
-      return candidate.error.statusCode;
-    }
-
-    if (typeof candidate?.response?.statusCode === 'number') {
-      return candidate.response.statusCode;
-    }
-
+    if (typeof candidate?.statusCode === 'number') return candidate.statusCode;
+    if (typeof candidate?.error?.statusCode === 'number') return candidate.error.statusCode;
+    if (typeof candidate?.response?.statusCode === 'number') return candidate.response.statusCode;
     return undefined;
   }
 
@@ -65,25 +59,15 @@ export class UsersController {
       candidate?.error?.message ??
       candidate?.response?.message;
 
-    if (Array.isArray(message)) {
-      return message.join(', ');
-    }
-
-    if (typeof message === 'string' && message.trim()) {
-      return message;
-    }
-
+    if (Array.isArray(message)) return message.join(', ');
+    if (typeof message === 'string' && message.trim()) return message;
     return 'Internal Server Error from Microservice';
   }
 
   private mapFollowersTotalError(error: unknown): HttpException {
     if (error instanceof TimeoutError) {
       return new HttpException(
-        {
-          statusCode: HttpStatus.GATEWAY_TIMEOUT,
-          message: 'Gateway timeout while fetching followers total',
-          error: 'GATEWAY_TIMEOUT',
-        },
+        { statusCode: HttpStatus.GATEWAY_TIMEOUT, message: 'Gateway timeout while fetching followers total', error: 'GATEWAY_TIMEOUT' },
         HttpStatus.GATEWAY_TIMEOUT,
       );
     }
@@ -92,44 +76,24 @@ export class UsersController {
     const message = this.extractMessage(error);
 
     if (statusCode === HttpStatus.NOT_FOUND) {
-      return new HttpException(
-        {
-          statusCode: HttpStatus.NOT_FOUND,
-          message,
-          error: 'NOT_FOUND',
-        },
-        HttpStatus.NOT_FOUND,
-      );
+      return new HttpException({ statusCode: HttpStatus.NOT_FOUND, message, error: 'NOT_FOUND' }, HttpStatus.NOT_FOUND);
     }
-
     if (statusCode === HttpStatus.BAD_REQUEST) {
-      return new HttpException(
-        {
-          statusCode: HttpStatus.BAD_REQUEST,
-          message,
-          error: 'BAD_REQUEST',
-        },
-        HttpStatus.BAD_REQUEST,
-      );
+      return new HttpException({ statusCode: HttpStatus.BAD_REQUEST, message, error: 'BAD_REQUEST' }, HttpStatus.BAD_REQUEST);
     }
 
     try {
       handleRpcCustomError(error);
     } catch (mapped) {
-      if (mapped instanceof HttpException) {
-        return mapped;
-      }
+      if (mapped instanceof HttpException) return mapped;
     }
 
-    return new HttpException(
-      {
-        statusCode: HttpStatus.INTERNAL_SERVER_ERROR,
-        message,
-      },
-      HttpStatus.INTERNAL_SERVER_ERROR,
-    );
+    return new HttpException({ statusCode: HttpStatus.INTERNAL_SERVER_ERROR, message }, HttpStatus.INTERNAL_SERVER_ERROR);
   }
 
+  // ── PÚBLICO
+
+  // Registro de nuevos usuarios — público
   @Post()
   create(@Body() createUserDto: CreateUserDto) {
     return this.usersClient
@@ -137,7 +101,38 @@ export class UsersController {
       .pipe(catchError(handleRpcCustomError));
   }
 
-  // GET /users/me → datos del usuario autenticado desde el JWT
+  // Lista de artistas (se muestra en el home)
+  @Get('artists')
+  findArtists(@Query() pagination: any) {
+    return this.usersClient
+      .send('findArtists', pagination)
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  // Perfil público de un usuario por ID — público
+  @Get(':id')
+  findOne(@Param('id', ParseUUIDPipe) id: string) {
+    return this.usersClient
+      .send('findOneUser', id)
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  // Conteo de seguidores — público
+  @Get(':userId/followers/total')
+  findFollowersTotal(@Param('userId', ParseUUIDPipe) userId: string) {
+    return this.usersClient.send('findFollowersTotalByUser', { userId }).pipe(
+      timeout(5000),
+      map((response: { userId?: string; totalFollowers?: number }) => ({
+        userId: response?.userId ?? userId,
+        totalFollowers: response?.totalFollowers,
+      })),
+      catchError((error: unknown) => throwError(() => this.mapFollowersTotalError(error))),
+    );
+  }
+
+  // ── AUTENTICADO
+
+  // Perfil propio — requiere JWT
   @Get('me')
   @UseGuards(JwtAuthGuard)
   findMe(@GetUser() user: any) {
@@ -146,8 +141,33 @@ export class UsersController {
       .pipe(catchError(handleRpcCustomError));
   }
 
-  // GET /users?query=<search> → búsqueda de usuarios por nombre/email
+  // Actualizar perfil propio — requiere JWT, solo el propio usuario
+  @Patch('me')
+  @UseGuards(JwtAuthGuard)
+  updateMe(@GetUser() user: any, @Body() updateUserDto: UpdateUserDto) {
+    return this.usersClient
+      .send('updateUser', { id: user.id, ...updateUserDto })
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  // Cambiar contraseña propia — requiere JWT
+  @Patch('me/password')
+  @UseGuards(JwtAuthGuard)
+  changeMyPassword(
+    @GetUser() user: any,
+    @Body() body: { newPassword: string },
+  ) {
+    return this.usersClient
+      .send('addPassword', { id: user.id, newPassword: body.newPassword })
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  // ── SOLO ADMIN
+
+  // Listar todos los usuarios — solo ADMIN
   @Get()
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   findAll(@Query('query') query?: string) {
     if (query) {
       return this.usersClient
@@ -159,47 +179,10 @@ export class UsersController {
       .pipe(catchError(handleRpcCustomError));
   }
 
-  // GET /users/artists?limit=&offset= → listar usuarios con rol ARTIST
-  @Get('artists')
-  findArtists(@Query() pagination: any) {
-    return this.usersClient
-      .send('findArtists', pagination)
-      .pipe(catchError(handleRpcCustomError));
-  }
-
-  @Get(':userId/followers/total')
-  findFollowersTotal(@Param('userId', ParseUUIDPipe) userId: string) {
-    return this.usersClient
-      .send('findFollowersTotalByUser', { userId })
-      .pipe(
-        timeout(5000),
-        map((response: { userId?: string; totalFollowers?: number }) => ({
-          userId: response?.userId ?? userId,
-          totalFollowers: response?.totalFollowers,
-        })),
-        catchError((error: unknown) =>
-          throwError(() => this.mapFollowersTotalError(error)),
-        ),
-      );
-  }
-
-  @Get(':id')
-  findOne(@Param('id', ParseUUIDPipe) id: string) {
-    return this.usersClient
-      .send('findOneUser', id)
-      .pipe(catchError(handleRpcCustomError));
-  }
-
-  // PATCH /users/me → actualizar el perfil del usuario autenticado
-  @Patch('me')
-  @UseGuards(JwtAuthGuard)
-  updateMe(@GetUser() user: any, @Body() updateUserDto: UpdateUserDto) {
-    return this.usersClient
-      .send('updateUser', { id: user.id, ...updateUserDto })
-      .pipe(catchError(handleRpcCustomError));
-  }
-
+  // Actualizar cualquier usuario — solo ADMIN
   @Patch(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   update(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() updateUserDto: UpdateUserDto,
@@ -209,28 +192,36 @@ export class UsersController {
       .pipe(catchError(handleRpcCustomError));
   }
 
-  @Delete(':id')
-  remove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.usersClient
-      .send('deactivateUser', id)
-      .pipe(catchError(handleRpcCustomError));
-  }
-
-  //testing
-  @Delete(':id/hard')
-  hardRemove(@Param('id', ParseUUIDPipe) id: string) {
-    return this.usersClient
-      .send('removeUser', id)
-      .pipe(catchError(handleRpcCustomError));
-  }
-
+  // Cambiar contraseña de cualquier usuario — solo ADMIN
   @Patch(':id/password')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
   addPassword(
     @Param('id', ParseUUIDPipe) id: string,
     @Body() body: { newPassword: string },
   ) {
     return this.usersClient
       .send('addPassword', { id, newPassword: body.newPassword })
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  // Desactivar usuario — solo ADMIN
+  @Delete(':id')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  remove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.usersClient
+      .send('deactivateUser', id)
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  // Borrado físico — solo ADMIN (mantener pero bien protegido)
+  @Delete(':id/hard')
+  @UseGuards(JwtAuthGuard, RolesGuard)
+  @Roles('ADMIN')
+  hardRemove(@Param('id', ParseUUIDPipe) id: string) {
+    return this.usersClient
+      .send('removeUser', id)
       .pipe(catchError(handleRpcCustomError));
   }
 }

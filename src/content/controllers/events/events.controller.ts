@@ -33,7 +33,7 @@ export class EventsController {
 
     // Validar que el usuario existe
     if (!user || !user.id) {
-      console.error('❌ user.id is undefined! User object:', user);
+      console.error('user.id is undefined! User object:', user);
       throw new BadRequestException(
         'Usuario no autenticado. El token JWT no contiene un userId válido.',
       );
@@ -41,7 +41,7 @@ export class EventsController {
 
     // El userId viene del JWT, no del body
     const userId = user.id;
-    console.log('✅ userId extraído del JWT:', userId);
+    console.log('userId extraído del JWT:', userId);
 
     const followers = await firstValueFrom(
       this.usersService.send('findFollowers', {
@@ -49,7 +49,7 @@ export class EventsController {
       }),
     ).catch((error) => {
       console.warn(
-        '⚠️ No se pudieron obtener followers, continuando sin ellos. Error:',
+        'No se pudieron obtener followers, continuando sin ellos. Error:',
         error.message,
       );
       return [];

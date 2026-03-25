@@ -1,5 +1,6 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
+import { ThrottlerModule } from '@nestjs/throttler';
 import {
   UsersModule,
   SocialMediaModule,
@@ -25,6 +26,16 @@ import { UserStatsModule } from './users/modules/user_stats/user-stats.module';
     ConfigModule.forRoot({
       isGlobal: true,
     }),
+
+    // Rate limiting global — 100 requests por minuto por IP
+    ThrottlerModule.forRoot([
+      {
+        name: 'global',
+        ttl: 60_000,  // 1 minuto en ms
+        limit: 100,
+      },
+    ]),
+
     UsersModule,
     AuthModule,
     NotificationsModule,
