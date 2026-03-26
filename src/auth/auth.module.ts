@@ -9,8 +9,6 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { USERS_SERVICE, EVENTS_SERVICE } from '../config/services.js';
 import { envs } from '../config/index.js';
 import { PublisherService } from '../common/publisher.service.js';
-import { AuthThrottlerGuard } from './guards/auth-throttler.guard';
-import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -19,14 +17,6 @@ import { ThrottlerModule } from '@nestjs/throttler';
       secret: envs.jwtSecret,
       signOptions: { expiresIn: '24h' },
     }),
-    ThrottlerModule.forRoot([
-      {
-        name: 'default',
-        ttl: 60_000, // 1 minuto en ms
-        limit: 5
-      }
-    ]),
-
     ClientsModule.register([
       {
         name: USERS_SERVICE,
@@ -42,15 +32,13 @@ import { ThrottlerModule } from '@nestjs/throttler';
         options: {
           urls: [envs.rabbitUrl],
           queue: 'riff_queue',
-          queueOptions: {
-            durable: true,
-          },
+          queueOptions: { durable: true },
         },
       },
     ]),
   ],
   controllers: [AuthController],
-  providers: [GoogleStrategy, JwtStrategy, PublisherService, GoogleCallbackGuard, AuthThrottlerGuard],
+  providers: [GoogleStrategy, JwtStrategy, PublisherService, GoogleCallbackGuard],
   exports: [JwtStrategy, PassportModule],
 })
 export class AuthModule {}

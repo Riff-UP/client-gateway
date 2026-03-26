@@ -19,7 +19,6 @@ import type { Request, Response } from 'express';
 import { firstValueFrom } from 'rxjs';
 import { LoginDto } from './dto/login.dto.js';
 import { Throttle } from '@nestjs/throttler';
-import { AuthThrottlerGuard } from './guards/auth-throttler.guard.js';
 
 @Controller('auth')
 export class AuthController {
@@ -269,7 +268,6 @@ export class AuthController {
   }
 
   @Post('login')
-  @UseGuards(AuthThrottlerGuard)
   @Throttle({default: {ttl: 60_000, limit: 5}})
   async login(
     @Body() payload: LoginDto,

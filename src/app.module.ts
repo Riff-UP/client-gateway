@@ -1,6 +1,8 @@
 import { Module } from '@nestjs/common';
 import { ConfigModule } from '@nestjs/config';
 import { ThrottlerModule } from '@nestjs/throttler';
+import { APP_GUARD } from '@nestjs/core';
+import { ThrottlerGuard } from '@nestjs/throttler';
 import {
   UsersModule,
   SocialMediaModule,
@@ -31,7 +33,7 @@ import { UserStatsModule } from './users/modules/user_stats/user-stats.module';
     ThrottlerModule.forRoot([
       {
         name: 'global',
-        ttl: 60_000,  // 1 minuto en ms
+        ttl: 60_000,
         limit: 100,
       },
     ]),
@@ -51,6 +53,12 @@ import { UserStatsModule } from './users/modules/user_stats/user-stats.module';
     PasswordResetsModule,
     UserFollowsModule,
     UserStatsModule,
+  ],
+  providers: [
+    {
+      provide: APP_GUARD,
+      useClass: ThrottlerGuard,
+    },
   ],
 })
 export class AppModule {}
