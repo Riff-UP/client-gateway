@@ -17,6 +17,7 @@ import { PublisherService } from '../common/publisher.service.js';
 import { GoogleCallbackGuard } from './guards/google-callback.guard.js';
 import type { Request, Response } from 'express';
 import { firstValueFrom } from 'rxjs';
+import { LoginDto } from './dto/login.dto.js';
 
 @Controller('auth')
 export class AuthController {
@@ -267,7 +268,7 @@ export class AuthController {
 
   @Post('login')
   async login(
-    @Body() payload: { email: string; password: string },
+    @Body() payload: LoginDto,
     @Req() req: Request,
   ) {
     const result = await firstValueFrom(this.authClient.send('login', payload));
