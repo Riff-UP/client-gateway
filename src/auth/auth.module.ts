@@ -10,6 +10,7 @@ import { USERS_SERVICE, EVENTS_SERVICE } from '../config/services.js';
 import { envs } from '../config/index.js';
 import { PublisherService } from '../common/publisher.service.js';
 import { AuthThrottlerGuard } from './guards/auth-throttler.guard';
+import { ThrottlerModule } from '@nestjs/throttler';
 
 @Module({
   imports: [
@@ -18,6 +19,14 @@ import { AuthThrottlerGuard } from './guards/auth-throttler.guard';
       secret: envs.jwtSecret,
       signOptions: { expiresIn: '24h' },
     }),
+    ThrottlerModule.forRoot([
+      {
+        name: 'default',
+        ttl: 60_000, // 1 minuto en ms
+        limit: 5
+      }
+    ]),
+
     ClientsModule.register([
       {
         name: USERS_SERVICE,
