@@ -9,6 +9,7 @@ import { ClientsModule, Transport } from '@nestjs/microservices';
 import { USERS_SERVICE, EVENTS_SERVICE } from '../config/services.js';
 import { envs } from '../config/index.js';
 import { PublisherService } from '../common/publisher.service.js';
+import { AuthThrottlerGuard } from './guards/auth-throttler.guard';
 
 @Module({
   imports: [
@@ -40,7 +41,7 @@ import { PublisherService } from '../common/publisher.service.js';
     ]),
   ],
   controllers: [AuthController],
-  providers: [GoogleStrategy, JwtStrategy, PublisherService, GoogleCallbackGuard],
+  providers: [GoogleStrategy, JwtStrategy, PublisherService, GoogleCallbackGuard, AuthThrottlerGuard],
   exports: [JwtStrategy, PassportModule],
 })
 export class AuthModule {}
