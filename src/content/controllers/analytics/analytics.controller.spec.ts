@@ -195,7 +195,7 @@ describe('AnalyticsController', () => {
     });
   });
 
-  it('reenvía el code del callback OAuth y responde HTML para cerrar el popup', async () => {
+  it('reenvía el code del callback OAuth y responde HTML para popup/hash fallback', async () => {
     const query = await transform(
       {
         code: 'oauth-code-123',
@@ -206,9 +206,10 @@ describe('AnalyticsController', () => {
       AnalyticsAuthCallbackQueryDto,
       'query',
     );
-    const response: Pick<Response, 'type' | 'send'> = {
+    const response: Pick<Response, 'type' | 'send' | 'setHeader'> = {
       type: jest.fn().mockReturnThis(),
       send: jest.fn().mockReturnValue('html-sent'),
+      setHeader: jest.fn().mockReturnThis(),
     };
 
     await expect(controller.exchangeGoogleCode(query, response)).resolves.toBe(
@@ -218,15 +219,22 @@ describe('AnalyticsController', () => {
     expect(sendMock).toHaveBeenCalledWith('exchangeAnalyticsGoogleCode', {
       code: 'oauth-code-123',
     });
+    expect(response.setHeader).toHaveBeenCalledWith(
+      'Cross-Origin-Opener-Policy',
+      'same-origin-allow-popups',
+    );
     expect(response.type).toHaveBeenCalledWith('html');
     expect(response.send).toHaveBeenCalledWith(
       expect.stringContaining('analytics-oauth-success'),
     );
     expect(response.send).toHaveBeenCalledWith(
-      expect.stringContaining('window.close()'),
+      expect.stringContaining('window.location.replace(fallback)'),
     );
     expect(response.send).toHaveBeenCalledWith(
-      expect.stringContaining('"state":"riff-benchmark-view"'),
+      expect.stringContaining('const state = "riff-benchmark-view";'),
+    );
+    expect(response.send).toHaveBeenCalledWith(
+      expect.stringContaining("console.log('[Analytics OAuth Callback] openerAvailable'"),
     );
   });
 });

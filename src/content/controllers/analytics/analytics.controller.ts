@@ -4,6 +4,7 @@ import {
   Controller,
   Get,
   Inject,
+  Logger,
   Post,
   Query,
   Res,
@@ -12,6 +13,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import type { Response } from 'express';
 import { catchError, firstValueFrom } from 'rxjs';
 import { handleRpcCustomError } from '../../../common';
+import { envs } from '../../../config';
 import { CONTENT_SERVICE } from '../../../config/services';
 import {
   AnalyticsAuthCallbackQueryDto,
@@ -34,10 +36,12 @@ type AnalyticsGoogleAuthUrlResponse =
     };
 
 type AnalyticsRedirectResponse = Pick<Response, 'redirect'>;
-type AnalyticsHtmlResponse = Pick<Response, 'type' | 'send'>;
+type AnalyticsHtmlResponse = Pick<Response, 'type' | 'send' | 'setHeader'>;
 
 @Controller('analytics')
 export class AnalyticsController {
+  private readonly logger = new Logger(AnalyticsController.name);
+
   constructor(
     @Inject(CONTENT_SERVICE) private readonly contentService: ClientProxy,
   ) {}
@@ -151,9 +155,21 @@ export class AnalyticsController {
 
     const accessToken = this.extractAccessToken(exchangeResponse);
 
+    const targetOrigin = this.resolveTargetOrigin();
+    const fallbackUrl = this.resolveFallbackUrl(targetOrigin);
+
+    this.logger.log('[Analytics OAuth Callback] Temporary debug logs', {
+      hasAccessToken: Boolean(accessToken),
+      targetOrigin,
+      fallbackUrl,
+    });
+
+    // Allow popup communication with opener for OAuth callback page.
+    res.setHeader('Cross-Origin-Opener-Policy', 'same-origin-allow-popups');
+
     return res
       .type('html')
-      .send(this.buildOAuthPopupHtml(this.readState(query), accessToken));
+      .send(this.buildOAuthPopupHtml(this.readState(query), accessToken, undefined));
   }
 
   private extractGoogleAuthUrl(response: unknown): string | undefined {
@@ -177,41 +193,76 @@ export class AnalyticsController {
   private extractAccessToken(response: unknown): string | undefined {
     if (!response || typeof response !== 'object') return undefined;
     const r = response as Record<string, unknown>;
-    const token = r['access_token'] ?? (r['data'] as Record<string, unknown> | undefined)?.['access_token'];
+    const token =
+      r['access_token'] ??
+      (r['data'] as Record<string, unknown> | undefined)?.['access_token'];
     return typeof token === 'string' && token ? token : undefined;
   }
 
-  private buildOAuthPopupHtml(state?: string, accessToken?: string): string {
-    const serializedPayload = this.serializeForInlineScript({
-      state,
-      success: true,
-      ...(accessToken ? { access_token: accessToken } : {}),
-    });
+  private resolveTargetOrigin(): string {
+    return new URL(envs.frontendUrl).origin;
+  }
+
+  private resolveFallbackUrl(targetOrigin: string): string {
+    return envs.analyticsCallbackUrl || envs.frontendUrl || targetOrigin;
+  }
+
+  private buildOAuthPopupHtml(
+    state?: string,
+    accessToken?: string,
+    error?: string,
+  ): string {
+    const targetOrigin = this.resolveTargetOrigin();
+    const fallbackUrl = this.resolveFallbackUrl(targetOrigin);
+
+    const serializedAccessToken = this.serializeForInlineScript(accessToken || '');
+    const serializedState = this.serializeForInlineScript(state || '');
+    const serializedError = this.serializeForInlineScript(error || '');
+    const serializedTargetOrigin = this.serializeForInlineScript(targetOrigin);
+    const serializedFallbackUrl = this.serializeForInlineScript(fallbackUrl);
 
     return `<!DOCTYPE html>
-<html lang="es">
-  <head>
-    <meta charset="UTF-8" />
-    <title>OAuth completado</title>
-  </head>
+<html>
   <body>
     <script>
-      (function () {
-        const message = {
-          type: 'analytics-oauth-success',
-          payload: ${serializedPayload},
-        };
+      (() => {
+        const accessToken = ${serializedAccessToken};
+        const state = ${serializedState};
+        const error = ${serializedError};
+        const targetOrigin = ${serializedTargetOrigin};
+        const fallbackBase = ${serializedFallbackUrl};
 
-        if (window.opener && !window.opener.closed) {
-          window.opener.postMessage(message, '*');
-          window.close();
-          return;
+        const hash = new URLSearchParams();
+        if (accessToken) hash.set('access_token', accessToken);
+        if (state) hash.set('state', state);
+        if (error) hash.set('error', error);
+
+        const fallback =
+          fallbackBase + (fallbackBase.includes('#') ? '&' : '#') + hash.toString();
+
+        const openerAvailable = Boolean(window.opener && !window.opener.closed);
+        console.log('[Analytics OAuth Callback] openerAvailable', openerAvailable);
+
+        try {
+          if (window.opener && !window.opener.closed && accessToken) {
+            window.opener.postMessage(
+              {
+                type: 'analytics-oauth-success',
+                payload: { access_token: accessToken, state },
+              },
+              targetOrigin,
+            );
+
+            setTimeout(() => window.close(), 150);
+            return;
+          }
+        } catch (e) {
+          console.error('postMessage failed', e);
         }
 
-        document.body.innerText = 'OAuth completado correctamente. Puedes cerrar esta ventana.';
+        window.location.replace(fallback);
       })();
     </script>
-    OAuth completado correctamente. Puedes cerrar esta ventana.
   </body>
 </html>`;
   }
