@@ -202,7 +202,10 @@ export class AuthController {
 
   @Get('google/callback')
   @UseGuards(GoogleCallbackGuard)
-  async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
+  async googleAuthRedirect(
+    @Req() req: Request & { user?: any },
+    @Res() res: Response,
+  ) {
     if (!req.user?.email) {
       this.logger.error('[Google Auth] Missing user/email in callback payload');
       return this.redirectGoogleAuthError(res, 'google_auth_failed');
