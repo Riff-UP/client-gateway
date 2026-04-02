@@ -13,7 +13,7 @@ import { ClientProxy } from '@nestjs/microservices';
 import type { Response } from 'express';
 import { catchError, firstValueFrom } from 'rxjs';
 import { handleRpcCustomError } from '../../../common';
-import { envs } from '../../../config';
+import { envs } from '../../../config/envs';
 import { CONTENT_SERVICE } from '../../../config/services';
 import {
   AnalyticsAuthCallbackQueryDto,
