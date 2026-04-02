@@ -111,13 +111,98 @@ export class AuthController {
     return res.redirect(redirectUrl);
   }
 
+  private readState(req: Request): string | undefined {
+    const state = (req.query as { state?: unknown } | undefined)?.state;
+    return typeof state === 'string' && state.trim() ? state : undefined;
+  }
+
+  private resolveFrontendOrigin(): string {
+    try {
+      return new URL(envs.frontendUrl).origin;
+    } catch {
+      return '*';
+    }
+  }
+
+  private buildGoogleOAuthCallbackHtml(
+    accessToken: string,
+    state?: string,
+  ): string {
+    const postMessageOrigin = this.serializeForInlineScript(
+      this.resolveFrontendOrigin(),
+    );
+    const fallbackUrl =
+      envs.analyticsCallbackUrl?.trim() || envs.frontendUrl;
+    const serializedFallbackUrl = this.serializeForInlineScript(fallbackUrl);
+
+    const serializedPayload = this.serializeForInlineScript({
+      access_token: accessToken,
+      state: state ?? null,
+    });
+
+    return `<!DOCTYPE html>
+<html lang="es">
+  <head>
+    <meta charset="UTF-8" />
+    <title>OAuth completado</title>
+  </head>
+  <body>
+    <script>
+      (function () {
+        const payload = ${serializedPayload};
+        const message = {
+          type: 'analytics-oauth-success',
+          payload,
+        };
+
+        if (window.opener && !window.opener.closed) {
+          window.opener.postMessage(message, ${postMessageOrigin});
+          window.close();
+          return;
+        }
+
+        const params = new URLSearchParams();
+        params.set('access_token', payload.access_token);
+        if (typeof payload.state === 'string' && payload.state.length > 0) {
+          params.set('state', payload.state);
+        }
+
+        const redirectUrl = new URL(${serializedFallbackUrl});
+        redirectUrl.hash = params.toString();
+        window.location.replace(redirectUrl.toString());
+      })();
+    </script>
+    OAuth completado correctamente. Puedes cerrar esta ventana.
+  </body>
+</html>`;
+  }
+
+  private serializeForInlineScript(value: unknown): string {
+    return JSON.stringify(value).replace(/[<>&\u2028\u2029]/g, (char) => {
+      switch (char) {
+        case '<':
+          return '\\u003c';
+        case '>':
+          return '\\u003e';
+        case '&':
+          return '\\u0026';
+        case '\u2028':
+          return '\\u2028';
+        case '\u2029':
+          return '\\u2029';
+        default:
+          return char;
+      }
+    });
+  }
+
   @Get('google')
   @UseGuards(AuthGuard('google'))
   async googleAuth(@Req() req) {}
 
   @Get('google/callback')
   @UseGuards(GoogleCallbackGuard)
-  async googleAuthRedirect(@Req() req, @Res() res: Response) {
+  async googleAuthRedirect(@Req() req: Request, @Res() res: Response) {
     if (!req.user?.email) {
       this.logger.error('[Google Auth] Missing user/email in callback payload');
       return this.redirectGoogleAuthError(res, 'google_auth_failed');
@@ -223,7 +308,9 @@ export class AuthController {
       );
     }
 
-    return res.redirect(`${envs.frontendUrl}/?token=${encodeURIComponent(token)}`);
+    const state = this.readState(req);
+
+    return res.type('html').send(this.buildGoogleOAuthCallbackHtml(token, state));
   }
 
   @Get('logout')
