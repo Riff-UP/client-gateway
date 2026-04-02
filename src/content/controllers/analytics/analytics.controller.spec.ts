@@ -15,6 +15,7 @@ import { AnalyticsController } from './analytics.controller';
 import {
   AnalyticsAuthCallbackQueryDto,
   AnalyticsAuthGoogleQueryDto,
+  AnalyticsHypothesisDailyQueryDto,
   AnalyticsMetricsQueryDto,
   AnalyticsSnapshotsQueryDto,
   AnalyticsWorkloadDto,
@@ -22,8 +23,10 @@ import {
 
 describe('AnalyticsController', () => {
   let controller: AnalyticsController;
-  let clientProxy: Pick<ClientProxy, 'send'>;
-  let sendMock: jest.Mock;
+  let contentClientProxy: Pick<ClientProxy, 'send'>;
+  let usersClientProxy: Pick<ClientProxy, 'send'>;
+  let contentSendMock: jest.Mock;
+  let usersSendMock: jest.Mock;
   const validationPipe = new ValidationPipe({
     whitelist: true,
     forbidNonWhitelisted: true,
@@ -42,18 +45,25 @@ describe('AnalyticsController', () => {
     }) as Promise<T>;
 
   beforeEach(() => {
-    sendMock = jest.fn().mockReturnValue(of({ ok: true }));
-    clientProxy = {
-      send: sendMock,
+    contentSendMock = jest.fn().mockReturnValue(of({ ok: true }));
+    usersSendMock = jest.fn().mockReturnValue(of({ ok: true }));
+    contentClientProxy = {
+      send: contentSendMock,
     };
-    controller = new AnalyticsController(clientProxy as ClientProxy);
+    usersClientProxy = {
+      send: usersSendMock,
+    };
+    controller = new AnalyticsController(
+      contentClientProxy as ClientProxy,
+      usersClientProxy as ClientProxy,
+    );
   });
 
   it('reenvía health al pattern RPC correcto', async () => {
     await expect(lastValueFrom(controller.getHealth())).resolves.toEqual({
       ok: true,
     });
-    expect(sendMock).toHaveBeenCalledWith('getAnalyticsHealth', {});
+    expect(contentSendMock).toHaveBeenCalledWith('getAnalyticsHealth', {});
   });
 
   it('usa el límite default para metrics cuando no llega query', async () => {
@@ -61,8 +71,45 @@ describe('AnalyticsController', () => {
 
     await lastValueFrom(controller.findMetrics(query));
 
-    expect(sendMock).toHaveBeenCalledWith('findAnalyticsMetrics', {
+    expect(contentSendMock).toHaveBeenCalledWith('findAnalyticsMetrics', {
       limit: 100,
+    });
+  });
+
+  it('reenvía hypothesis/daily a users-ms con scope default global', async () => {
+    const query = await transform(
+      {
+        from: '2026-01-01T00:00:00.000Z',
+        to: '2026-01-07T23:59:59.999Z',
+      },
+      AnalyticsHypothesisDailyQueryDto,
+      'query',
+    );
+
+    await lastValueFrom(controller.getHypothesisDaily(query));
+
+    expect(usersSendMock).toHaveBeenCalledWith('analyticsHypothesisDaily', {
+      from: '2026-01-01T00:00:00.000Z',
+      to: '2026-01-07T23:59:59.999Z',
+      scope: 'global',
+    });
+  });
+
+  it('exige userId cuando scope=user en hypothesis/daily', async () => {
+    await expect(
+      transform(
+        {
+          from: '2026-01-01T00:00:00.000Z',
+          to: '2026-01-07T23:59:59.999Z',
+          scope: 'user',
+        },
+        AnalyticsHypothesisDailyQueryDto,
+        'query',
+      ),
+    ).rejects.toMatchObject({
+      response: {
+        message: ['userId must be a UUID'],
+      },
     });
   });
 
@@ -75,7 +122,7 @@ describe('AnalyticsController', () => {
 
     await lastValueFrom(controller.findSnapshots(query));
 
-    expect(sendMock).toHaveBeenCalledWith('findAnalyticsSnapshots', {
+    expect(contentSendMock).toHaveBeenCalledWith('findAnalyticsSnapshots', {
       limit: 25,
     });
   });
@@ -99,7 +146,7 @@ describe('AnalyticsController', () => {
   });
 
   it('redirige a la URL OAuth devuelta por content-ms', async () => {
-    sendMock.mockReturnValueOnce(
+    contentSendMock.mockReturnValueOnce(
       of({
         url: 'https://accounts.google.com/o/oauth2/v2/auth?client_id=test',
       }),
@@ -117,7 +164,7 @@ describe('AnalyticsController', () => {
       'redirected',
     );
 
-    expect(sendMock).toHaveBeenCalledWith('getAnalyticsGoogleAuthUrl', {
+    expect(contentSendMock).toHaveBeenCalledWith('getAnalyticsGoogleAuthUrl', {
       state: 'riff-benchmark-view',
     });
     expect(response.redirect).toHaveBeenCalledWith(
@@ -126,7 +173,7 @@ describe('AnalyticsController', () => {
   });
 
   it('falla si content-ms no devuelve una URL OAuth usable', async () => {
-    sendMock.mockReturnValueOnce(of({ ok: true }));
+    contentSendMock.mockReturnValueOnce(of({ ok: true }));
     const query = await transform({}, AnalyticsAuthGoogleQueryDto, 'query');
     const response: Pick<Response, 'redirect'> = {
       redirect: jest.fn(),
@@ -216,7 +263,7 @@ describe('AnalyticsController', () => {
       'html-sent',
     );
 
-    expect(sendMock).toHaveBeenCalledWith('exchangeAnalyticsGoogleCode', {
+    expect(contentSendMock).toHaveBeenCalledWith('exchangeAnalyticsGoogleCode', {
       code: 'oauth-code-123',
     });
     expect(response.setHeader).toHaveBeenCalledWith(

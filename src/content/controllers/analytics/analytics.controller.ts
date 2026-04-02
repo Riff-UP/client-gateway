@@ -14,12 +14,13 @@ import type { Response } from 'express';
 import { catchError, firstValueFrom } from 'rxjs';
 import { handleRpcCustomError } from '../../../common';
 import { envs } from '../../../config/envs';
-import { CONTENT_SERVICE } from '../../../config/services';
+import { CONTENT_SERVICE, USERS_SERVICE } from '../../../config/services';
 import {
   AnalyticsAuthCallbackQueryDto,
   AnalyticsAuthGoogleQueryDto,
   AnalyticsConfigUpsertDto,
   AnalyticsExportDto,
+  AnalyticsHypothesisDailyQueryDto,
   AnalyticsMetricsQueryDto,
   AnalyticsSnapshotDto,
   AnalyticsSnapshotsQueryDto,
@@ -44,6 +45,7 @@ export class AnalyticsController {
 
   constructor(
     @Inject(CONTENT_SERVICE) private readonly contentService: ClientProxy,
+    @Inject(USERS_SERVICE) private readonly usersService: ClientProxy,
   ) {}
 
   @Get('health')
@@ -57,6 +59,18 @@ export class AnalyticsController {
   getSummary() {
     return this.contentService
       .send('getAnalyticsSummary', {})
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  @Get('hypothesis/daily')
+  getHypothesisDaily(@Query() query: AnalyticsHypothesisDailyQueryDto) {
+    return this.usersService
+      .send('analyticsHypothesisDaily', {
+        from: query.from,
+        to: query.to,
+        scope: query.scope ?? 'global',
+        ...(query.userId ? { userId: query.userId } : {}),
+      })
       .pipe(catchError(handleRpcCustomError));
   }
 
