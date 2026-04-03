@@ -3,6 +3,7 @@ export * from './analytics/analytics-auth-google-query.dto';
 export * from './analytics/analytics-config-upsert.dto';
 export * from './analytics/analytics-export.dto';
 export * from './analytics/analytics-hypothesis-daily-query.dto';
+export * from './analytics/analytics-hypothesis-summary-query.dto';
 export * from './analytics/analytics-metrics-query.dto';
 export * from './analytics/analytics-snapshot.dto';
 export * from './analytics/analytics-snapshots-query.dto';

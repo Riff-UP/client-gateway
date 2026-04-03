@@ -16,6 +16,7 @@ import {
   AnalyticsAuthCallbackQueryDto,
   AnalyticsAuthGoogleQueryDto,
   AnalyticsHypothesisDailyQueryDto,
+  AnalyticsHypothesisSummaryQueryDto,
   AnalyticsMetricsQueryDto,
   AnalyticsSnapshotsQueryDto,
   AnalyticsWorkloadDto,
@@ -92,6 +93,47 @@ describe('AnalyticsController', () => {
       from: '2026-01-01T00:00:00.000Z',
       to: '2026-01-07T23:59:59.999Z',
       scope: 'global',
+    });
+  });
+
+  it('reenvía hypothesis/summary a content-ms con split default midpoint', async () => {
+    const query = await transform(
+      {
+        from: '2026-01-01T00:00:00.000Z',
+        to: '2026-01-31T23:59:59.999Z',
+      },
+      AnalyticsHypothesisSummaryQueryDto,
+      'query',
+    );
+
+    await lastValueFrom(controller.getHypothesisSummary(query));
+
+    expect(contentSendMock).toHaveBeenCalledWith(
+      'content.analytics.hypothesis.summary',
+      {
+        from: '2026-01-01T00:00:00.000Z',
+        to: '2026-01-31T23:59:59.999Z',
+        split: 'midpoint',
+      },
+    );
+  });
+
+  it('requiere from y to válidos para hypothesis/summary', async () => {
+    await expect(
+      transform(
+        {
+          from: 'no-es-fecha',
+        },
+        AnalyticsHypothesisSummaryQueryDto,
+        'query',
+      ),
+    ).rejects.toMatchObject({
+      response: {
+        message: [
+          'from must be a valid ISO 8601 date string',
+          'to must be a valid ISO 8601 date string',
+        ],
+      },
     });
   });
 

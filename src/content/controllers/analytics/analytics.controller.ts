@@ -21,6 +21,7 @@ import {
   AnalyticsConfigUpsertDto,
   AnalyticsExportDto,
   AnalyticsHypothesisDailyQueryDto,
+  AnalyticsHypothesisSummaryQueryDto,
   AnalyticsMetricsQueryDto,
   AnalyticsSnapshotDto,
   AnalyticsSnapshotsQueryDto,
@@ -70,6 +71,20 @@ export class AnalyticsController {
         to: query.to,
         scope: query.scope ?? 'global',
         ...(query.userId ? { userId: query.userId } : {}),
+      })
+      .pipe(catchError(handleRpcCustomError));
+  }
+
+  @Get('hypothesis/summary')
+  getHypothesisSummary(@Query() query: AnalyticsHypothesisSummaryQueryDto) {
+    return this.contentService
+      .send('content.analytics.hypothesis.summary', {
+        from: query.from,
+        to: query.to,
+        split: query.split ?? 'midpoint',
+        ...(typeof query.threshold === 'number'
+          ? { threshold: query.threshold }
+          : {}),
       })
       .pipe(catchError(handleRpcCustomError));
   }
