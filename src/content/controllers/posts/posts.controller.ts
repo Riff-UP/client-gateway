@@ -129,6 +129,19 @@ export class PostsController {
       );
   }
 
+  @Get(':postId/saves/total')
+  findSavesTotal(@Param('postId') postId: string) {
+    return this.contentService
+      .send('getPostSavesTotal', { postId })
+      .pipe(
+        map((response: { postId?: string; totalSaves?: number }) => ({
+          postId: response?.postId ?? postId,
+          totalSaves: response?.totalSaves ?? 0,
+        })),
+        catchError(handleRpcCustomError),
+      );
+  }
+
   @Get(':id')
   findOne(@Param('id') id: string) {
     return this.contentService
