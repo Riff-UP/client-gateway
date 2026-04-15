@@ -15,10 +15,15 @@ import { USERS_SERVICE, EVENTS_SERVICE } from '../config/services.js';
 import { envs } from '../config/index.js';
 import { PublisherService } from '../common/publisher.service.js';
 import { GoogleCallbackGuard } from './guards/google-callback.guard.js';
+import { JwtAuthGuard } from './guards/jwt-auth.guard.js';
+import { GetUser } from './decorators/get-user.decorator.js';
 import type { Request, Response } from 'express';
 import { firstValueFrom } from 'rxjs';
 import { LoginDto } from './dto/login.dto.js';
 import { Throttle } from '@nestjs/throttler';
+import { TwoFactorCodeDto } from './dto/two-factor-code.dto.js';
+import { TwoFactorVerifyLoginDto } from './dto/two-factor-verify-login.dto.js';
+import { TwoFactorService } from './services/two-factor.service.js';
 
 @Controller('auth')
 export class AuthController {
@@ -28,7 +33,48 @@ export class AuthController {
     @Inject(USERS_SERVICE) private readonly authClient: ClientProxy,
     @Inject(EVENTS_SERVICE) private readonly eventsClient: ClientProxy,
     private readonly publisher: PublisherService,
+    private readonly twoFactorService: TwoFactorService,
   ) {}
+
+  private buildAuthEventPayload(result: { token: string; user: any }) {
+    return {
+      userId: result.user.id ?? result.user.userId,
+      token: result.token,
+      email: result.user.email,
+      name: result.user.name,
+      role: result.user.role,
+      googleId: result.user.googleId,
+      picture: result.user.picture,
+    };
+  }
+
+  private async establishPassportSession(req: Request, user: any): Promise<void> {
+    await new Promise<void>((resolve) => {
+      req.logIn(user, (err) => {
+        if (err) {
+          this.publisher['logger']?.warn?.('req.logIn failed: ' + String(err));
+        }
+        resolve();
+      });
+    });
+  }
+
+  private publishTokenGenerated(payload: {
+    userId: string;
+    token: string;
+    email: string;
+    name: string;
+    role: string;
+    googleId?: string;
+    picture?: string;
+  }): void {
+    this.logger.log('[Auth] Emitiendo auth.tokenGenerated', {
+      userId: payload.userId,
+      email: payload.email,
+    });
+
+    this.publisher.publish('auth.tokenGenerated', payload);
+  }
 
   private extractErrorStatusCode(error: unknown): number | undefined {
     const candidate = error as
@@ -203,8 +249,22 @@ export class AuthController {
       return this.redirectGoogleAuthError(res, 'oauth_token');
     }
 
+    const userId = String(user.id ?? user.userId ?? '');
+    if (!userId) {
+      this.logger.error(`[Google Auth] Missing userId for ${email}`);
+      return this.redirectGoogleAuthError(res, 'oauth_user_missing_id');
+    }
+
+    const isTwoFactorEnabled = await this.twoFactorService.isEnabled(userId);
+    if (isTwoFactorEnabled) {
+      const tempToken = await this.twoFactorService.createPendingLogin(user, token);
+      return res.redirect(
+        `${envs.frontendUrl}/?requires2fa=true&tempToken=${encodeURIComponent(tempToken)}&auth=google`,
+      );
+    }
+
     const eventPayload = {
-      userId: user.id ?? user.userId,
+      userId,
       token,
       email: user.email,
       name: user.name,
@@ -279,34 +339,85 @@ export class AuthController {
     const result = await firstValueFrom(this.authClient.send('login', payload));
 
     if (result && result.token && result.user) {
-      const eventPayload = {
-        userId: result.user.id ?? result.user.userId,
-        token: result.token,
-        email: result.user.email,
-        name: result.user.name,
-        role: result.user.role,
-        googleId: result.user.googleId,
-        picture: result.user.picture,
-      };
+      const userId = String(result.user.id ?? result.user.userId ?? '');
 
-      console.log('[Login] Emitiendo auth.tokenGenerated:', {
-        userId: eventPayload.userId,
-        email: eventPayload.email,
-      });
+      if (userId && (await this.twoFactorService.isEnabled(userId))) {
+        const tempToken = await this.twoFactorService.createPendingLogin(
+          result.user,
+          result.token,
+        );
 
-      this.publisher.publish('auth.tokenGenerated', eventPayload);
+        return {
+          requiresTwoFactor: true,
+          tempToken,
+          expiresInSeconds: envs.twoFactorTempTokenTtlSeconds,
+        };
+      }
 
-      // Guardar usuario en sesión de Passport
-      await new Promise<void>((resolve) => {
-        req.logIn(result.user, (err) => {
-          if (err) {
-            this.publisher['logger']?.warn?.(
-              'req.logIn failed: ' + String(err),
-            );
-          }
-          resolve();
-        });
-      });
+      const eventPayload = this.buildAuthEventPayload(result);
+      this.publishTokenGenerated(eventPayload);
+      await this.establishPassportSession(req, result.user);
+    }
+
+    return result;
+  }
+
+  @Get('2fa/status')
+  @UseGuards(JwtAuthGuard)
+  async twoFactorStatus(@GetUser() user: any) {
+    const userId = String(user?.id ?? user?.userId ?? '');
+    return {
+      enabled: userId ? await this.twoFactorService.isEnabled(userId) : false,
+      issuer: envs.twoFactorIssuer,
+    };
+  }
+
+  @Post('2fa/setup')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  async setupTwoFactor(@GetUser() user: any) {
+    const userId = String(user?.id ?? user?.userId ?? '');
+    const email = String(user?.email ?? '');
+    return this.twoFactorService.createSetup(userId, email);
+  }
+
+  @Post('2fa/enable')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  async enableTwoFactor(
+    @GetUser() user: any,
+    @Body() payload: TwoFactorCodeDto,
+  ) {
+    const userId = String(user?.id ?? user?.userId ?? '');
+    return this.twoFactorService.enableWithCode(userId, payload.code);
+  }
+
+  @Post('2fa/disable')
+  @UseGuards(JwtAuthGuard)
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  async disableTwoFactor(
+    @GetUser() user: any,
+    @Body() payload: TwoFactorCodeDto,
+  ) {
+    const userId = String(user?.id ?? user?.userId ?? '');
+    return this.twoFactorService.disableWithCode(userId, payload.code);
+  }
+
+  @Post('2fa/verify-login')
+  @Throttle({ default: { ttl: 60_000, limit: 5 } })
+  async verifyTwoFactorLogin(
+    @Body() payload: TwoFactorVerifyLoginDto,
+    @Req() req: Request,
+  ) {
+    const result = await this.twoFactorService.consumePendingLogin(
+      payload.tempToken,
+      payload.code,
+    );
+
+    if (result && result.token && result.user) {
+      const eventPayload = this.buildAuthEventPayload(result);
+      this.publishTokenGenerated(eventPayload);
+      await this.establishPassportSession(req, result.user);
     }
 
     return result;

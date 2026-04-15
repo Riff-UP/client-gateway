@@ -29,6 +29,11 @@ interface EnvVars {
   FRONTEND_URL?: string;
   FRONT_URL?: string;
   ANALYTICS_CALLBACK_URL?: string;
+
+  TWO_FACTOR_ISSUER?: string;
+  TWO_FACTOR_ENCRYPTION_KEY?: string;
+  TWO_FACTOR_TEMP_TOKEN_TTL_SECONDS?: number;
+  TWO_FACTOR_SETUP_TTL_SECONDS?: number;
 }
 
 const envSchema = joi
@@ -60,6 +65,14 @@ const envSchema = joi
     FRONTEND_URL: joi.string().uri().optional(),
     FRONT_URL: joi.string().uri().optional(),
     ANALYTICS_CALLBACK_URL: joi.string().optional(),
+
+    TWO_FACTOR_ISSUER: joi.string().default('Riff'),
+    TWO_FACTOR_ENCRYPTION_KEY: joi
+      .string()
+      .min(16)
+      .default('riff-2fa-dev-key-change-me'),
+    TWO_FACTOR_TEMP_TOKEN_TTL_SECONDS: joi.number().integer().min(60).default(300),
+    TWO_FACTOR_SETUP_TTL_SECONDS: joi.number().integer().min(60).default(600),
   })
   .unknown(true);
 
@@ -104,4 +117,11 @@ export const envs = {
   frontendUrl:
     envVars.FRONTEND_URL ?? envVars.FRONT_URL ?? 'http://localhost:3000',
   analyticsCallbackUrl: envVars.ANALYTICS_CALLBACK_URL ?? '',
+
+  twoFactorIssuer: envVars.TWO_FACTOR_ISSUER ?? 'Riff',
+  twoFactorEncryptionKey:
+    envVars.TWO_FACTOR_ENCRYPTION_KEY ?? 'riff-2fa-dev-key-change-me',
+  twoFactorTempTokenTtlSeconds:
+    envVars.TWO_FACTOR_TEMP_TOKEN_TTL_SECONDS ?? 300,
+  twoFactorSetupTtlSeconds: envVars.TWO_FACTOR_SETUP_TTL_SECONDS ?? 600,
 };
