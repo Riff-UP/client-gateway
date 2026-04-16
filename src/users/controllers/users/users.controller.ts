@@ -112,6 +112,14 @@ export class UsersController {
       .pipe(catchError(handleRpcCustomError));
   }
 
+  @Delete('me')
+  @UseGuards(JwtAuthGuard)
+  removeMe(@GetUser() user: any) {
+    return this.usersClient
+      .send('deactivateUser', user.id)
+      .pipe(catchError(handleRpcCustomError));
+  }
+
   // ── PÚBLICO con param
 
   @Get(':userId/followers/total')
@@ -168,9 +176,16 @@ export class UsersController {
   }
 
   @Delete(':id')
-  @UseGuards(JwtAuthGuard, RolesGuard)
-  @Roles('ADMIN')
-  remove(@Param('id', ParseUUIDPipe) id: string) {
+  @UseGuards(JwtAuthGuard)
+  remove(@Param('id', ParseUUIDPipe) id: string, @GetUser() user: any) {
+    const requesterId = String(user?.id ?? '');
+    const requesterRole = String(user?.role ?? '');
+    const isAdmin = requesterRole.toUpperCase() === 'ADMIN';
+
+    if (!isAdmin && requesterId !== id) {
+      throw new ForbiddenException('No tienes permisos suficientes');
+    }
+
     return this.usersClient
       .send('deactivateUser', id)
       .pipe(catchError(handleRpcCustomError));
