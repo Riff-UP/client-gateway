@@ -42,6 +42,12 @@ export class TwoFactorService {
   private readonly redis: RedisClientType;
 
   constructor(private readonly jwtService: JwtService) {
+    authenticator.options = {
+      ...authenticator.options,
+      step: 30,
+      window: envs.twoFactorTotpWindow,
+    };
+
     this.redis = createClient({
       url: envs.redisUrl,
       socket: {
@@ -54,6 +60,10 @@ export class TwoFactorService {
         },
       },
     });
+  }
+
+  private normalizeTotpCode(code: string): string {
+    return String(code ?? '').replace(/\s+/g, '');
   }
 
   private get encryptionKey(): Buffer {
@@ -167,7 +177,8 @@ export class TwoFactorService {
       );
     }
 
-    const isValid = authenticator.verify({ token: code, secret });
+    const normalizedCode = this.normalizeTotpCode(code);
+    const isValid = authenticator.verify({ token: normalizedCode, secret });
     if (!isValid) {
       throw new UnauthorizedException('Invalid 2FA code');
     }
@@ -190,7 +201,8 @@ export class TwoFactorService {
       return { enabled: false };
     }
 
-    const isValid = authenticator.verify({ token: code, secret });
+    const normalizedCode = this.normalizeTotpCode(code);
+    const isValid = authenticator.verify({ token: normalizedCode, secret });
     if (!isValid) {
       throw new UnauthorizedException('Invalid 2FA code');
     }
@@ -291,7 +303,8 @@ export class TwoFactorService {
       throw new UnauthorizedException('2FA is not configured for this account');
     }
 
-    const isValid = authenticator.verify({ token: code, secret });
+    const normalizedCode = this.normalizeTotpCode(code);
+    const isValid = authenticator.verify({ token: normalizedCode, secret });
     if (!isValid) {
       pending.attempts += 1;
       const ttl = await this.redis.ttl(key);

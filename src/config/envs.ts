@@ -34,6 +34,7 @@ interface EnvVars {
   TWO_FACTOR_ENCRYPTION_KEY?: string;
   TWO_FACTOR_TEMP_TOKEN_TTL_SECONDS?: number;
   TWO_FACTOR_SETUP_TTL_SECONDS?: number;
+  TWO_FACTOR_TOTP_WINDOW?: number;
 }
 
 const envSchema = joi
@@ -73,6 +74,7 @@ const envSchema = joi
       .default('riff-2fa-dev-key-change-me'),
     TWO_FACTOR_TEMP_TOKEN_TTL_SECONDS: joi.number().integer().min(60).default(300),
     TWO_FACTOR_SETUP_TTL_SECONDS: joi.number().integer().min(60).default(600),
+    TWO_FACTOR_TOTP_WINDOW: joi.number().integer().min(0).max(2).default(1),
   })
   .unknown(true);
 
@@ -124,4 +126,5 @@ export const envs = {
   twoFactorTempTokenTtlSeconds:
     envVars.TWO_FACTOR_TEMP_TOKEN_TTL_SECONDS ?? 300,
   twoFactorSetupTtlSeconds: envVars.TWO_FACTOR_SETUP_TTL_SECONDS ?? 600,
+  twoFactorTotpWindow: envVars.TWO_FACTOR_TOTP_WINDOW ?? 1,
 };
