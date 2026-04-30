@@ -6,7 +6,7 @@ import {
 } from '@nestjs/common';
 import type { Request } from 'express';
 
-/** Decodifica el payload del JWT sin verificar la firma */
+/** Decodifica el payload del JWT */
 function decodeJwtPayload(token: string): Record<string, unknown> | null {
   try {
     const parts = token.split('.');
@@ -20,9 +20,8 @@ function decodeJwtPayload(token: string): Record<string, unknown> | null {
 }
 
 /**
- * Guard que extrae y decodifica el JWT del header Authorization.
- * NO verifica la firma — la verificación real la hace el users-ms.
- * Esto permite que el gateway funcione sin importar el JWT_SECRET del users-ms.
+ * El gateway decodifica el JWT para extraer la identidad
+ * la validación criptográfica queda como deuda técnica pendiente
  */
 @Injectable()
 export class JwtAuthGuard implements CanActivate {
