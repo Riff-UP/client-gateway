@@ -214,7 +214,7 @@ client-gateway/
 
 **Técnico:** Microservicios reales (ECST, eventual consistency, multi-transport), seguridad en capas, arquitectura sin punto único de fallo.
 
-**Colaborativo:** Especialización clara + decisiones conjuntas. Debugging rápido sin egos. Iteración sobre perfeccionismo.
+**Colaborativo:** Especialización clara + decisiones conjuntas. Debugging rápido. Iteración sobre perfeccionismo.
 
 ---
 
@@ -256,7 +256,7 @@ Desarrollar **Riff** fue una experiencia de aprendizaje profundo, técnico y hum
 
 **Aprendizajes Humanos:**
 - **Comunicación Clara**: Documentación, PRs con contexto, reuniones focalizadas. Async > síncronos siempre.
-- **Debugging sin Egos**: Cuando fallaba algo (JWT sin verificar, ECST timeout), el equipo colaboraba en raíz causa.
+- **Debugging**: Cuando fallaba algo (JWT sin verificar, ECST timeout), el equipo colaboraba en raíz causa.
 - **Iteración sobre Perfeccionismo**: Hacer, fallar, aprender. Ajustar arquitectura sobre la marcha.
 
 ---
